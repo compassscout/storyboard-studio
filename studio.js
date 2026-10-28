@@ -247,6 +247,8 @@ function updateAiService() {
   const model = $('#apiModel')?.value || 'deepseek-chat';
   $('#aiServiceName').textContent = provider;
   $('#aiServiceModel').textContent = `${model} · 已连接`;
+  const chip = $('#apiChipText');
+  if (chip) chip.textContent = `${provider} 已配置`;
 }
 
 function updateReviewStats() {
