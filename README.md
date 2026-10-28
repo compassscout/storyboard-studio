@@ -1,5 +1,7 @@
 # 分镜台 Studio · v0.3.0
 
+[**在线打开 v0.3.0 制作台**](https://compassscout.github.io/storyboard-studio/storyboard-studio-v3/)
+
 一个**本地优先**的视频分镜与装配工作台。
 
 当前仓库包含两版界面：
@@ -8,6 +10,8 @@
 - **v0.2.0 Electron 应用**：仓库根目录，可运行的本地应用。
 
 ## v0.3.0 制作台原型
+
+[![制作台总览](storyboard-studio-v3/screenshots/overview.png)](https://compassscout.github.io/storyboard-studio/storyboard-studio-v3/)
 
 直接打开 `storyboard-studio-v3/index.html` 即可，无需安装、无需联网。
 
