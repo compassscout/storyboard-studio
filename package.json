@@ -1,6 +1,6 @@
 {
   "name": "storyboard-studio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "项目化视频分镜、文稿处理与本节装配工作台",
   "main": "main.js",

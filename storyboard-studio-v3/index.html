@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>分镜台 Studio · 制作台原型</title>
+  <meta name="description" content="分镜台 Studio v0.3 可交互原型：文稿定稿、分镜、素材与交付包一条流水线。">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#" id="brandHome" aria-label="分镜台 Studio 首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="24" height="24" fill="none">
+            <rect x="3" y="5" width="26" height="20" rx="5" fill="currentColor"/>
+            <path d="M3 11h26M9 5v6M23 5v6" stroke="#fffdf8" stroke-width="1.7"/>
+            <path d="m13 16 7 4-7 4v-8Z" fill="#fffdf8"/>
+          </svg>
+        </span>
+        <span class="brand-copy"><strong>分镜台</strong><small>STUDIO</small></span>
+      </a>
+
+      <div class="crumb" id="crumb">
+        <span>制作台</span><span class="crumb-sep">/</span><strong id="crumbProject">鹿特丹港</strong><span class="crumb-sep">/</span><span class="crumb-current" id="crumbSection">第 03 节</span>
+      </div>
+
+      <div class="topbar-meta">
+        <span class="save-state" id="saveState">
+          <span class="save-dot" aria-hidden="true"></span>
+          <span id="saveLabel">已保存</span>
+        </span>
+        <span class="top-progress" id="topProgress">2/5 可交付 · 6 镜缺素材</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" id="newProjectBtn">
+          <span class="icon-slot" data-icon="file-plus"></span>新建项目
+        </button>
+        <button class="btn btn-primary" id="exportOpenBtn">
+          <span class="icon-slot" data-icon="package"></span>导出交付包
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="queue" id="queuePanel" aria-label="小节队列">
+        <div class="queue-head">
+          <div>
+            <span class="panel-kicker">SECTIONS</span>
+            <h2>小节队列</h2>
+          </div>
+          <span class="queue-count" id="queueCount">5 节</span>
+        </div>
+
+        <div class="queue-tools">
+          <label class="search-field">
+            <span class="icon-slot" data-icon="search"></span>
+            <input id="sectionSearch" type="search" placeholder="搜索标题或正文" autocomplete="off" aria-label="搜索小节">
+          </label>
+          <div class="filter-chips" id="queueFilters" role="group" aria-label="筛选小节">
+            <button class="chip is-active" data-filter="all">全部 <em id="countAll">5</em></button>
+            <button class="chip" data-filter="todo">待办 <em id="countTodo">3</em></button>
+            <button class="chip" data-filter="ready">可交付 <em id="countReady">2</em></button>
+          </div>
+        </div>
+
+        <div class="queue-scroll" id="sectionList"></div>
+
+        <div class="queue-foot">
+          <button class="btn btn-soft btn-block" id="addSectionBtn">
+            <span class="icon-slot" data-icon="plus"></span>新小节
+          </button>
+          <button class="btn btn-ghost btn-block" id="importOpenBtn">
+            <span class="icon-slot" data-icon="file-input"></span>导入长文稿
+          </button>
+        </div>
+      </aside>
+
+      <section class="stage" aria-label="当前小节">
+        <div class="stage-sticky">
+          <div class="section-head">
+            <div class="section-head-main">
+              <span class="section-kicker" id="sectionKicker">第 1 集 / 第一章 / 03</span>
+              <div class="section-title-row">
+                <h1 id="sectionTitle">黄金时代：1958 年的转运革命</h1>
+                <span class="status-pill" id="sectionStatus">草稿</span>
+              </div>
+              <p class="section-meta" id="sectionMeta">47s / 目标 60s · 4 镜 · 2 镜缺素材</p>
+            </div>
+            <div class="section-head-actions">
+              <span class="hint-inline" id="editHint">点击高亮，右侧查看修改</span>
+              <button class="btn btn-soft" id="storyboardBtn">
+                <span class="icon-slot" data-icon="play"></span>故事板预览
+              </button>
+            </div>
+          </div>
+
+          <nav class="stepper" id="stepper" aria-label="制作步骤">
+            <button class="step" data-step="1">
+              <span class="step-index">1</span>
+              <span class="step-copy"><strong>配音稿</strong><small>改字、定稿</small></span>
+              <span class="step-state" aria-hidden="true"></span>
+            </button>
+            <span class="step-line" aria-hidden="true"></span>
+            <button class="step" data-step="2">
+              <span class="step-index">2</span>
+              <span class="step-copy"><strong>分镜</strong><small>镜头与时长</small></span>
+              <span class="step-state" aria-hidden="true"></span>
+            </button>
+            <span class="step-line" aria-hidden="true"></span>
+            <button class="step" data-step="3">
+              <span class="step-index">3</span>
+              <span class="step-copy"><strong>素材与交付</strong><small>缺口与导出</small></span>
+              <span class="step-state" aria-hidden="true"></span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="stage-body" id="stepContent"></div>
+      </section>
+
+      <aside class="inspector" aria-label="检查器">
+        <div class="inspector-head">
+          <span class="panel-kicker">INSPECTOR</span>
+          <span class="inspector-badge" id="inspectorBadge"></span>
+        </div>
+        <div class="inspector-body" id="inspectorBody"></div>
+        <div class="next-card" id="nextCard"></div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- 导入文稿 -->
+  <div class="overlay" id="importOverlay" hidden>
+    <div class="modal import-modal" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+      <div class="modal-head">
+        <div>
+          <span class="panel-kicker">NEW PROJECT</span>
+          <h2 id="importTitle">把长文稿放进来</h2>
+        </div>
+        <button class="icon-btn" id="importClose" aria-label="关闭">
+          <span class="icon-slot" data-icon="x"></span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-lead">粘贴或导入文稿后，先预览自动分节结果，再创建项目。创建后会直接进入第一节的配音稿。</p>
+        <label class="field">
+          <span>项目名称</span>
+          <input id="importName" value="鹿特丹港：从码头到枢纽" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>原始文稿 <em>支持 ## 小标题，也支持按空行分节</em></span>
+          <textarea id="importText" rows="7"></textarea>
+        </label>
+        <div class="split-preview">
+          <div class="split-head">
+            <span>自动分节预览</span>
+            <span id="splitCount">0 节</span>
+          </div>
+          <div class="split-list" id="splitList"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="loadDemoBtn">载入示例文稿</button>
+        <span class="foot-spacer"></span>
+        <button class="btn btn-soft" id="importCancel">取消</button>
+        <button class="btn btn-primary" id="importCreate">创建项目，进入配音稿</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 交付包 -->
+  <div class="overlay" id="exportOverlay" hidden>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+      <div class="drawer-head">
+        <div>
+          <span class="panel-kicker">DELIVERY</span>
+          <h2 id="exportTitle">导出交付包</h2>
+        </div>
+        <button class="icon-btn" id="exportClose" aria-label="关闭">
+          <span class="icon-slot" data-icon="x"></span>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="check-list" id="exportChecks"></div>
+        <div class="file-list" id="exportFiles"></div>
+        <p class="drawer-note">原型演示：会真实生成一个 zip，包含勾选的文件。校验只提示风险，不阻止你导出。</p>
+      </div>
+      <div class="drawer-foot">
+        <div class="export-result" id="exportResult"></div>
+        <button class="btn btn-primary btn-block" id="generateBtn">
+          <span class="icon-slot" data-icon="download"></span>生成交付包（zip）
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 故事板预览 -->
+  <div class="overlay" id="storyOverlay" hidden>
+    <div class="modal story-modal" role="dialog" aria-modal="true" aria-labelledby="storyTitle">
+      <div class="modal-head">
+        <div>
+          <span class="panel-kicker">STORYBOARD</span>
+          <h2 id="storyTitle">故事板预览</h2>
+        </div>
+        <button class="icon-btn" id="storyClose" aria-label="关闭">
+          <span class="icon-slot" data-icon="x"></span>
+        </button>
+      </div>
+      <div class="story-stage" id="storyStage"></div>
+      <div class="story-caption">
+        <span class="story-no" id="storyNo">镜 01 / 04</span>
+        <strong id="storyVisual">画面建议</strong>
+        <span class="story-duration" id="storyDuration">9s</span>
+      </div>
+      <div class="story-strip" id="storyStrip" aria-label="镜头列表"></div>
+      <div class="story-foot">
+        <button class="btn btn-soft" id="storyPlay">
+          <span class="icon-slot" data-icon="play"></span><span id="storyPlayLabel">播放故事板</span>
+        </button>
+        <span class="story-time" id="storyTime">00:00 / 00:00</span>
+        <span class="foot-spacer"></span>
+        <span class="story-hint">按 Esc 关闭 · 空格播放 / 暂停</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden role="status" aria-live="polite">
+    <span id="toastMsg"></span>
+    <button class="toast-action" id="toastAction" hidden></button>
+  </div>
+
+  <div class="sr-only" id="srAnnounce" aria-live="polite"></div>
+  <noscript><div class="noscript">这个原型需要启用 JavaScript。</div></noscript>
+
+  <script src="mock.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
