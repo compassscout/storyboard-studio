@@ -1,8 +1,8 @@
 {
   "name": "storyboard-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "文稿驱动的视频分镜、预演与导出工作台（界面原型）",
+  "description": "文稿驱动的视频镜头表、素材装配与初稿导出工作台（界面原型）",
   "main": "main.js",
   "author": "compassscout",
   "license": "MIT",

@@ -32,41 +32,43 @@ let currentTime = 0;
 let playing = false;
 let playTimer = null;
 let toastTimer = null;
-let activeMediaTab = 'media';
+let activeMediaTab = 'storyboard';
+let currentMediaFilter = 'all';
+let selectedExportTarget = 'pack';
 
 const shots = [
   {
-    id: 's1', start: 0, dur: 10, type: '背景', scene: 'map', material: '罗马帝国版图_03',
+    id: 's1', start: 0, dur: 10, type: '背景', scene: 'map', material: '罗马帝国版图_03', review: 'adopted',
     visual: '罗马帝国全盛版图，地中海区域缓慢推近，标出罗马城。',
     narration: '公元 3 世纪，罗马帝国已经统治地中海世界近三百年。',
     keywords: ['Roman Empire map', '3rd century', 'Mediterranean'],
   },
   {
-    id: 's2', start: 10, dur: 14, type: '数据', scene: 'coins', material: '三世纪金币特写',
+    id: 's2', start: 10, dur: 14, type: '数据', scene: 'coins', material: '三世纪金币特写', review: 'adopted',
     visual: '三枚皇帝金币特写快速切换，叠出半个世纪的皇帝名单。',
     narration: '但从公元 235 年开始，帝国在五十年里换了二十多位皇帝。',
     keywords: ['Roman emperor coins', 'Crisis of the Third Century'],
   },
   {
-    id: 's3', start: 24, dur: 13, type: '冲突', scene: 'senate', material: '元老院辩论_油画',
+    id: 's3', start: 24, dur: 13, type: '冲突', scene: 'senate', material: '元老院辩论_油画', review: 'adopted',
     visual: '昏暗的元老院大厅，元老们争论；军靴声从远处逼近。',
     narration: '军队拥立皇帝，元老院无力约束，边境压力同时加剧。',
     keywords: ['Roman Senate', 'Roman politics', 'Roman frontier'],
   },
   {
-    id: 's4', start: 37, dur: 12, type: '转折', scene: 'tetrarchy', material: '四帝共治_示意图',
+    id: 's4', start: 37, dur: 12, type: '转折', scene: 'tetrarchy', material: '四帝共治_示意图', review: 'pending',
     visual: '地图切成四块，两位奥古斯都与两位凯撒的徽章依次出现。',
     narration: '戴克里先尝试把帝国一分为二，由两位奥古斯都共同治理。',
     keywords: ['Tetrarchy map', 'Diocletian', 'Augustus Caesar'],
   },
   {
-    id: 's5', start: 49, dur: 11, type: '观点', scene: 'capitals', material: '罗马与君士坦丁堡',
+    id: 's5', start: 49, dur: 11, type: '观点', scene: 'capitals', material: '罗马与君士坦丁堡', review: 'pending',
     visual: '罗马的柱廊与君士坦丁堡的穹顶左右并置，一条道路连接两城。',
     narration: '这次改革暂时稳住了局势，却也埋下了东西分裂的种子。',
     keywords: ['Rome', 'Constantinople', 'late Roman empire'],
   },
   {
-    id: 's6', start: 60, dur: 12, type: '结论', scene: 'divided', material: '395年帝国分裂图',
+    id: 's6', start: 60, dur: 12, type: '结论', scene: 'divided', material: '395年帝国分裂图', review: 'pending',
     visual: '地图从中间裂开，西罗马与东罗马分别亮起，最后定格在 395 年。',
     narration: '到 395 年，帝国正式分裂，之后再没有真正统一。',
     keywords: ['Division of Roman Empire 395', 'Western Roman Empire'],
@@ -74,14 +76,15 @@ const shots = [
 ];
 
 const materialLibrary = [
-  { name: '罗马帝国版图_03', scene: 'map', tags: '地图 · 地中海 · 3世纪' },
-  { name: '三世纪金币特写', scene: 'coins', tags: '金币 · 皇帝 · 史料' },
-  { name: '元老院辩论_油画', scene: 'senate', tags: '元老院 · 人物 · 室内' },
-  { name: '罗马军团_边境', scene: 'soldier', tags: '军队 · 边境 · 旗帜' },
-  { name: '四帝共治_示意图', scene: 'tetrarchy', tags: '制度 · 地图 · 分屏' },
-  { name: '罗马与君士坦丁堡', scene: 'capitals', tags: '双城 · 建筑 · 对比' },
-  { name: '395年帝国分裂图', scene: 'divided', tags: '地图 · 分裂 · 结尾' },
-  { name: '古代地图手稿', scene: 'document', tags: '手稿 · 文献 · 质感' },
+  { name: '罗马帝国版图_03', scene: 'map', kind: 'image', tags: '地图 · 地中海 · 3世纪' },
+  { name: '三世纪金币特写', scene: 'coins', kind: 'video', tags: '金币 · 皇帝 · 史料' },
+  { name: '元老院辩论_油画', scene: 'senate', kind: 'image', tags: '元老院 · 人物 · 室内' },
+  { name: '罗马军团_边境', scene: 'soldier', kind: 'video', tags: '军队 · 边境 · 旗帜' },
+  { name: '四帝共治_示意图', scene: 'tetrarchy', kind: 'image', tags: '制度 · 地图 · 分屏' },
+  { name: '罗马与君士坦丁堡', scene: 'capitals', kind: 'image', tags: '双城 · 建筑 · 对比' },
+  { name: '395年帝国分裂图', scene: 'divided', kind: 'image', tags: '地图 · 分裂 · 结尾' },
+  { name: '古代地图手稿', scene: 'document', kind: 'image', tags: '手稿 · 文献 · 质感' },
+  { name: '旁白_豆包.wav', scene: 'document', kind: 'audio', tags: '旁白 · 44.1kHz · 01:12' },
 ];
 
 /* ---------------- SVG scenes ---------------- */
@@ -217,7 +220,10 @@ function goStep(step) {
   $('#step1').hidden = step !== 1;
   $('#step2').hidden = step !== 2;
   $('#step3').hidden = step !== 3;
-  if (step === 2) renderEditor();
+  if (step === 2) {
+    setInspectorPane('shot');
+    renderEditor();
+  }
   if (step === 1) updateCharCount();
   window.scrollTo({ top: 0 });
 }
@@ -229,11 +235,40 @@ function updateCharCount() {
 }
 
 function updateProjectView() {
-  $('#projectName').textContent = project.title;
+  $('#projectName').value = project.title;
   $('#projectPath').textContent = project.path;
   $('#outputPath').textContent = project.path;
   $('#editorPath').textContent = `${project.path}storyboard.json`;
   $('#exportPath').textContent = `${project.path}export\\`;
+}
+
+function updateAiService() {
+  const provider = $('#apiProvider')?.value || 'DeepSeek';
+  const model = $('#apiModel')?.value || 'deepseek-chat';
+  $('#aiServiceName').textContent = provider;
+  $('#aiServiceModel').textContent = `${model} · 已连接`;
+}
+
+function updateReviewStats() {
+  const adopted = shots.filter((shot) => shot.review === 'adopted').length;
+  const pending = shots.length - adopted;
+  const meta = $('.context-meta');
+  if (meta) meta.innerHTML = `${shots.length} 个镜头 · <b>${adopted} 已采用</b> · ${pending} 待确认`;
+  const head = $('.shot-panel-head span:last-child');
+  if (head) head.textContent = `${adopted} / ${shots.length} 已采用`;
+  const shotCount = $('#shotTabCount');
+  if (shotCount) shotCount.textContent = String(shots.length);
+  const mediaCount = $('#mediaTabCount');
+  if (mediaCount) mediaCount.textContent = String(materialLibrary.length);
+  const checkSummary = $('#checkSummary');
+  if (checkSummary) checkSummary.textContent = pending ? `3 项通过 · 1 项提醒` : '全部通过 · 可以导出';
+  const checkAdopt = $('#checkAdopt');
+  if (checkAdopt) checkAdopt.hidden = pending === 0;
+  const checkAdoptText = $('#checkAdoptText');
+  if (checkAdoptText && pending) {
+    const pendingNo = shots.filter((shot) => shot.review !== 'adopted').map((shot) => String(shots.indexOf(shot) + 1).padStart(2, '0')).join('、');
+    checkAdoptText.textContent = `镜头 ${pendingNo} 还未采用，导出前确认`;
+  }
 }
 
 /* ---------------- step 2 render ---------------- */
@@ -254,11 +289,12 @@ function renderStage() {
   }
   $('#inspectorNo').textContent = String(activeIndex + 1).padStart(2, '0');
   const adopt = $('#inspectorAdopt');
-  adopt.textContent = activeIndex < 2 ? '已采用' : '待确认';
-  adopt.classList.toggle('is-pending', activeIndex >= 2);
+  adopt.textContent = shot.review === 'adopted' ? '已采用' : '待确认';
+  adopt.classList.toggle('is-pending', shot.review !== 'adopted');
   $('#visualInput').value = shot.visual;
   $('#narrationInput').value = shot.narration;
   $('#durationSelect').value = `${shot.dur}s`;
+  updateReviewStats();
 }
 
 function renderTimeline() {
@@ -269,7 +305,7 @@ function renderTimeline() {
   const ruler = $('#ruler');
 
   video.innerHTML = shots.map((shot, index) => `
-    <button class="clip ${index === activeIndex ? 'is-active' : ''}" data-index="${index}" style="flex:${shot.dur} 1 0%" title="${shot.visual}">
+    <button class="clip ${index === activeIndex ? 'is-active' : ''} ${shot.review === 'pending' ? 'is-pending' : ''}" data-index="${index}" style="flex:${shot.dur} 1 0%" title="${shot.visual}">
       <span class="clip-thumb">${sceneSvg(shot.scene)}</span>
       <span class="clip-copy"><span class="clip-num">${String(index + 1).padStart(2, '0')}</span><span class="clip-name">${shot.visual.slice(0, 12)}</span></span>
     </button>
@@ -305,15 +341,19 @@ function renderMedia() {
   const query = ($('#mediaSearch')?.value || '').toLowerCase();
   const list = materialLibrary
     .map((item, index) => ({ ...item, index }))
+    .filter((item) => currentMediaFilter === 'all' || item.kind === currentMediaFilter)
     .filter((item) => !query || `${item.name} ${item.tags}`.toLowerCase().includes(query));
 
   $('#mediaCount').textContent = `${materialLibrary.length} 个素材 · 本地`;
-  $('#mediaList').innerHTML = list.map((item) => `
+  const count = $('#mediaTabCount');
+  if (count) count.textContent = String(materialLibrary.length);
+
+  $('#mediaList').innerHTML = list.length ? list.map((item) => `
     <button class="media-item ${shots[activeIndex].material === item.name ? 'is-bound' : ''}" data-media="${item.index}">
-      <span class="media-thumb">${sceneSvg(item.scene)}</span>
+      <span class="media-thumb ${item.kind === 'audio' ? 'is-audio' : ''}">${sceneSvg(item.scene)}${item.kind === 'audio' ? '<span class="audio-mini">▮▮▮</span>' : ''}</span>
       <span class="media-copy"><span class="media-name">${item.name}</span><span class="media-tags">${item.tags}</span></span>
     </button>
-  `).join('');
+  `).join('') : '<div class="media-empty">没有匹配的素材</div>';
 
   $$('.media-item', $('#mediaList')).forEach((node) => {
     node.addEventListener('click', () => {
@@ -328,18 +368,24 @@ function renderMedia() {
 }
 
 function renderStoryboardList() {
-  $('#mediaList').innerHTML = shots.map((shot, index) => `
-    <button class="media-item ${index === activeIndex ? 'is-bound' : ''}" data-shot-index="${index}">
-      <span class="media-thumb">${sceneSvg(shot.scene)}</span>
-      <span class="media-copy"><span class="media-name">镜头 ${String(index + 1).padStart(2, '0')} · ${shot.type}</span><span class="media-tags">${shot.narration.slice(0, 16)}…</span></span>
+  $('#shotList').innerHTML = shots.map((shot, index) => `
+    <button class="shot-row ${index === activeIndex ? 'is-active' : ''}" data-shot-index="${index}">
+      <span class="shot-row-num">${String(index + 1).padStart(2, '0')}</span>
+      <span class="shot-row-main">
+        <strong>${shot.type} <em>${shot.dur}s · ${shot.material ? '已绑定' : '未绑定'}</em></strong>
+        <small>${shot.visual}</small>
+      </span>
+      <span class="shot-status ${shot.review === 'adopted' ? 'adopted' : 'pending'}">${shot.review === 'adopted' ? '已采用' : '待确认'}</span>
     </button>
   `).join('');
-  $$('.media-item', $('#mediaList')).forEach((node) => {
+
+  $$('.shot-row', $('#shotList')).forEach((node) => {
     node.addEventListener('click', () => {
       stopPlayback();
       setActiveShot(Number(node.dataset.shotIndex), true);
     });
   });
+  updateReviewStats();
 }
 
 function renderBindCard() {
@@ -352,10 +398,28 @@ function renderBindCard() {
 function renderEditor() {
   renderStage();
   renderTimeline();
+  $('#shotPanel').hidden = activeMediaTab !== 'storyboard';
+  $('#mediaPanel').hidden = activeMediaTab === 'storyboard';
   if (activeMediaTab === 'storyboard') renderStoryboardList();
   else renderMedia();
   renderBindCard();
   updatePlayhead();
+}
+
+function setMediaTab(tab) {
+  activeMediaTab = tab;
+  const isStoryboard = tab === 'storyboard';
+  $('#storyboardTabBtn').classList.toggle('is-active', isStoryboard);
+  $('#mediaTabBtn').classList.toggle('is-active', !isStoryboard);
+  $('#shotPanel').hidden = !isStoryboard;
+  $('#mediaPanel').hidden = isStoryboard;
+  if (isStoryboard) renderStoryboardList();
+  else renderMedia();
+}
+
+function setInspectorPane(pane) {
+  $$('.inspector-tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.pane === pane));
+  $$('.inspector-pane').forEach((item) => { item.hidden = item.dataset.pane !== pane; });
 }
 
 function setActiveShot(index, syncTime = false) {
@@ -433,6 +497,13 @@ function bindEvents() {
   });
 
   $('#scriptInput').addEventListener('input', updateCharCount);
+  $('#projectName').addEventListener('input', (event) => {
+    project.title = event.target.value;
+  });
+  $('#renameProjectBtn').addEventListener('click', () => {
+    $('#projectName').focus();
+    $('#projectName').select();
+  });
   $('#uploadScriptBtn').addEventListener('click', () => {
     showToast('原型演示：真实版本会打开文件选择器，读取 .txt / .md 文稿');
   });
@@ -451,7 +522,7 @@ function bindEvents() {
       button.disabled = false;
       button.innerHTML = original;
       goStep(2);
-      showToast('已生成 6 个镜头，storyboard.json 已保存到本地（演示）');
+      showToast('已生成 6 个镜头，先审核镜头表，再绑定素材（演示）');
     }, 1100);
   });
 
@@ -465,6 +536,8 @@ function bindEvents() {
     showToast('DeepSeek 连接正常（原型演示）');
   });
 
+  $('#openApiSettingsBtn').addEventListener('click', () => { $('#apiModal').hidden = false; });
+
   $('#apiProvider').addEventListener('change', (event) => {
     const model = $('#apiModel');
     if (event.target.value === 'DeepSeek') {
@@ -472,7 +545,9 @@ function bindEvents() {
     } else {
       model.innerHTML = '<option>gpt-4.1</option><option>gpt-4o-mini</option>';
     }
+    updateAiService();
   });
+  $('#apiModel').addEventListener('change', updateAiService);
 
   $('#regenerateBtn').addEventListener('click', () => goStep(1));
   $('#toExportBtn').addEventListener('click', () => {
@@ -480,6 +555,18 @@ function bindEvents() {
     goStep(3);
     renderExportPath();
   });
+
+  $('#undoBtn').addEventListener('click', () => showToast('原型演示：撤销栈还没有接入'));
+  $('#redoBtn').addEventListener('click', () => showToast('原型演示：重做栈还没有接入'));
+  $('#reviewAllBtn').addEventListener('click', () => {
+    shots.forEach((shot) => { shot.review = 'adopted'; });
+    renderStoryboardList();
+    renderStage();
+    showToast('已批量采用 6 个镜头（演示）');
+  });
+  $('#reviewHintBtn').addEventListener('click', () => setMediaTab('media'));
+  $('#addTrackBtn').addEventListener('click', () => showToast('原型演示：自定义轨道还没有接入'));
+  $('#addClipBtn').addEventListener('click', () => showToast('原型演示：一个镜头多片段还没有接入'));
 
   $('#fitBtn').addEventListener('click', async () => {
     try {
@@ -510,6 +597,23 @@ function bindEvents() {
   $('#nextShotBtn').addEventListener('click', () => {
     stopPlayback();
     setActiveShot(activeIndex + 1, true);
+  });
+
+  $$('.inspector-tab').forEach((tab) => {
+    tab.addEventListener('click', () => setInspectorPane(tab.dataset.pane));
+  });
+
+  $('#adoptShotBtn').addEventListener('click', () => {
+    shots[activeIndex].review = 'adopted';
+    renderStage();
+    renderStoryboardList();
+    showToast(`镜头 ${String(activeIndex + 1).padStart(2, '0')} 已采用`);
+  });
+  $('#reviseShotBtn').addEventListener('click', () => {
+    shots[activeIndex].review = 'pending';
+    renderStage();
+    renderStoryboardList();
+    showToast(`镜头 ${String(activeIndex + 1).padStart(2, '0')} 已标记为需要修改`);
   });
 
   $('#visualInput').addEventListener('input', (event) => {
@@ -553,28 +657,25 @@ function bindEvents() {
   });
 
   $('#importMediaBtn').addEventListener('click', () => {
-    materialLibrary.push({ name: `新素材_${String(materialLibrary.length + 1).padStart(2, '0')}`, scene: 'document', tags: '待整理 · 未标注' });
+    materialLibrary.push({ name: `新素材_${String(materialLibrary.length + 1).padStart(2, '0')}`, scene: 'document', kind: 'image', tags: '待整理 · 未标注' });
     renderMedia();
     showToast('已添加一个演示素材');
   });
 
   $('#mediaSearch').addEventListener('input', () => {
-    if (activeMediaTab === 'storyboard') renderStoryboardList();
-    else renderMedia();
+    if (activeMediaTab === 'media') renderMedia();
   });
 
-  $('#mediaTabBtn').addEventListener('click', () => {
-    activeMediaTab = 'media';
-    $('#mediaTabBtn').classList.add('is-active');
-    $('#storyboardTabBtn').classList.remove('is-active');
-    renderMedia();
+  $$('.filter-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      currentMediaFilter = chip.dataset.filter;
+      $$('.filter-chip').forEach((item) => item.classList.toggle('is-active', item === chip));
+      renderMedia();
+    });
   });
-  $('#storyboardTabBtn').addEventListener('click', () => {
-    activeMediaTab = 'storyboard';
-    $('#storyboardTabBtn').classList.add('is-active');
-    $('#mediaTabBtn').classList.remove('is-active');
-    renderStoryboardList();
-  });
+
+  $('#mediaTabBtn').addEventListener('click', () => setMediaTab('media'));
+  $('#storyboardTabBtn').addEventListener('click', () => setMediaTab('storyboard'));
 
   $('#backToEditorBtn').addEventListener('click', () => goStep(2));
   $('#chooseExportBtn').addEventListener('click', () => showToast('已选择导出目录（原型演示）'));
@@ -583,17 +684,25 @@ function bindEvents() {
     goStep(1);
   });
 
-  $$('.export-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const label = button.textContent;
-      button.disabled = true;
-      button.textContent = '正在整理…';
-      setTimeout(() => {
-        button.disabled = false;
-        button.textContent = label;
-        showToast('导出完成：这是原型演示，没有真的写入文件');
-      }, 900);
+  $$('.target-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      selectedExportTarget = card.dataset.target;
+      $$('.target-card').forEach((item) => item.classList.toggle('is-selected', item === card));
+      $('#targetWarning').hidden = selectedExportTarget !== 'draft';
     });
+  });
+
+  $('#exportNowBtn').addEventListener('click', () => {
+    const button = $('#exportNowBtn');
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = '正在整理导出清单…';
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = original;
+      const targetName = { pack: '素材包 + 分镜表', draft: '剪映草稿', xml: 'XML / EDL / MLT' }[selectedExportTarget];
+      showToast(`已准备 ${targetName}（原型演示，没有写入文件）`);
+    }, 900);
   });
 
   $('#settingsBtn').addEventListener('click', () => { $('#apiModal').hidden = false; });
@@ -601,6 +710,7 @@ function bindEvents() {
   $('#cancelApiModal').addEventListener('click', () => { $('#apiModal').hidden = true; });
   $('#saveApiModal').addEventListener('click', () => {
     $('#apiModal').hidden = true;
+    updateAiService();
     showToast('设置已保存（原型演示）');
   });
   $('#apiModal').addEventListener('click', (event) => {
@@ -624,6 +734,7 @@ function bindEvents() {
 
 function init() {
   updateProjectView();
+  updateAiService();
   updateCharCount();
   bindEvents();
   goStep(1);
