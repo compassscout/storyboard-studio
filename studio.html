@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>分镜台 Studio · 文稿 → 分镜 → 预演 → 导出</title>
+  <meta name="description" content="文稿驱动的视频预演工作台：AI 分镜、本地素材、时间线预演、导出到剪映。">
+  <link rel="stylesheet" href="studio.css">
+</head>
+<body>
+  <div class="app">
+    <header class="appbar">
+      <a class="brand" href="studio.html">
+        <span class="brand-mark">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true">
+            <rect x="3" y="5" width="26" height="20" rx="5" fill="currentColor"/>
+            <path d="M3 11h26M9 5v6M23 5v6" stroke="#1c1a17" stroke-width="1.6"/>
+            <path d="m13 16 7 4-7 4v-8Z" fill="#f5eee3"/>
+          </svg>
+        </span>
+        <span class="brand-copy"><strong>分镜台</strong><small>STUDIO</small></span>
+      </a>
+
+      <nav class="stepper" aria-label="工作流">
+        <button class="step is-active" data-step="1"><span class="step-num">1</span><span><strong>文稿</strong><small>AI 分镜</small></span></button>
+        <i class="step-line"></i>
+        <button class="step" data-step="2"><span class="step-num">2</span><span><strong>预演</strong><small>时间线</small></span></button>
+        <i class="step-line"></i>
+        <button class="step" data-step="3"><span class="step-num">3</span><span><strong>导出</strong><small>到剪映</small></span></button>
+      </nav>
+
+      <div class="appbar-actions">
+        <span class="api-chip"><i></i>DeepSeek 已配置</span>
+        <button class="icon-btn" id="settingsBtn" title="设置" aria-label="设置">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.07A1.7 1.7 0 0 0 8.96 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3v-4h.07A1.7 1.7 0 0 0 4.6 8.96a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.96 4.6 1.7 1.7 0 0 0 10 3.04V3h4v.07a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8.96 1.7 1.7 0 0 0 20.96 10H21v4h-.07A1.7 1.7 0 0 0 19.4 15Z"/></svg>
+        </button>
+        <span class="demo-pill">原型演示</span>
+      </div>
+    </header>
+
+    <!-- ============ STEP 1 ============ -->
+    <main class="page step-page" id="step1">
+      <div class="page-heading">
+        <div class="eyebrow">SCRIPT FIRST · 文稿驱动</div>
+        <div class="heading-row">
+          <div>
+            <h1>先有一篇稿子，<br><em>再让它长出画面。</em></h1>
+            <p>上传或粘贴你的文稿，AI 会把它拆成带画面描述、时长和搜索词的分镜脚本。结果保存到你指定的本地目录。</p>
+          </div>
+          <div class="project-card">
+            <span class="mini-label">当前项目</span>
+            <strong id="projectName">罗马帝国为什么会分裂？</strong>
+            <span class="project-path" id="projectPath">D:\VideoProjects\罗马帝国\</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-grid">
+        <section class="card manuscript-card">
+          <div class="card-head">
+            <div>
+              <div class="mini-label">01 · 文稿</div>
+              <h2>粘贴或上传文稿</h2>
+            </div>
+            <button class="btn btn-soft" id="uploadScriptBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></svg>
+              选择文件
+            </button>
+          </div>
+          <textarea id="scriptInput" spellcheck="false">公元 3 世纪，罗马帝国已经统治地中海世界近三百年。
+但从公元 235 年开始，帝国在五十年里换了二十多位皇帝。
+军队拥立皇帝，元老院无力约束，边境压力同时加剧。
+戴克里先尝试把帝国一分为二，由两位奥古斯都共同治理。
+这次改革暂时稳住了局势，却也埋下了东西分裂的种子。
+到 395 年，帝国正式分裂，之后再没有真正统一。</textarea>
+          <div class="manuscript-foot">
+            <span id="charCount">6 段 · 约 155 字</span>
+            <span class="foot-note">支持 .txt / .md · 原型不会真的读取文件</span>
+          </div>
+        </section>
+
+        <aside class="setup-side">
+          <section class="card compact">
+            <div class="card-head tight">
+              <div>
+                <div class="mini-label">02 · AI</div>
+                <h2>模型连接</h2>
+              </div>
+              <span class="status-dot ok">已连接</span>
+            </div>
+            <div class="two-fields">
+              <label class="field">
+                <span>API 提供方</span>
+                <select id="apiProvider">
+                  <option>DeepSeek</option>
+                  <option>OpenAI 兼容</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>模型</span>
+                <select id="apiModel">
+                  <option>deepseek-chat</option>
+                  <option>deepseek-reasoner</option>
+                </select>
+              </label>
+            </div>
+            <label class="field">
+              <span>API Key</span>
+              <div class="key-row">
+                <input id="apiKey" type="password" value="sk-demo-••••••••••••" autocomplete="off">
+                <button class="text-btn" id="testApiBtn">测试</button>
+              </div>
+            </label>
+            <p class="hint">Key 只保存在本机；真实版本会使用系统钥匙串，不写进项目文件。</p>
+          </section>
+
+          <section class="card generate-card">
+            <div class="card-head tight">
+              <div>
+                <div class="mini-label">03 · 生成</div>
+                <h2>分镜设置</h2>
+              </div>
+            </div>
+
+            <div class="output-inline">
+              <div class="mini-label">保存到本地</div>
+              <div class="path-picker">
+                <span class="folder-icon">▱</span>
+                <code id="outputPath">D:\VideoProjects\罗马帝国\</code>
+                <button class="text-btn" id="chooseFolderBtn">选择</button>
+              </div>
+              <div class="save-list">
+                <span>storyboard.json</span>
+                <span>shotlist.csv</span>
+                <span>assets/</span>
+              </div>
+            </div>
+
+            <div class="two-fields">
+              <label class="field"><span>画面风格</span><select><option>历史纪录片</option><option>知识解说</option><option>极简白板</option></select></label>
+              <label class="field"><span>分镜密度</span><select><option>每 80–120 字</option><option>每 40–80 字</option><option>每 150–200 字</option></select></label>
+            </div>
+            <button class="btn btn-primary btn-generate" id="generateBtn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>
+              生成分镜脚本
+            </button>
+            <p class="hint center">预计生成 6 个镜头 · 约 72 秒 · 不会真的调用 API</p>
+          </section>
+        </aside>
+      </div>
+
+      <div class="recent-strip">
+        <span class="mini-label">最近项目</span>
+        <button class="recent-item is-current"><span class="recent-dot"></span>罗马帝国为什么会分裂？<em>刚刚</em></button>
+        <button class="recent-item"><span class="recent-dot"></span>中世纪城市的一天<em>昨天</em></button>
+        <button class="recent-item"><span class="recent-dot"></span>秦始皇统一六国<em>3 天前</em></button>
+      </div>
+    </main>
+
+    <!-- ============ STEP 2 ============ -->
+    <main class="editor-page" id="step2" hidden>
+      <div class="editor-top">
+        <div class="file-meta">
+          <span class="file-chip">storyboard.json</span>
+          <span class="saved-chip"><i></i>已保存到本地</span>
+          <span class="file-path" id="editorPath">D:\VideoProjects\罗马帝国\storyboard.json</span>
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-ghost-dark" id="regenerateBtn">重新生成</button>
+          <button class="btn btn-primary" id="toExportBtn">下一步：导出 <span>→</span></button>
+        </div>
+      </div>
+
+      <div class="editor-guide">
+        <span class="guide-pill done">✓ 已生成分镜</span>
+        <span class="guide-pill active">2 · 检查画面 / 绑定素材</span>
+        <span class="guide-pill">3 · 导出到剪映</span>
+        <span class="guide-hint">点左侧素材绑定当前镜头 · 空格播放预演</span>
+      </div>
+
+      <div class="editor-grid">
+        <aside class="media-panel">
+          <div class="panel-tabs">
+            <button class="panel-tab is-active" id="mediaTabBtn">本地素材</button>
+            <button class="panel-tab" id="storyboardTabBtn">分镜</button>
+          </div>
+          <div class="media-toolbar">
+            <label class="search-field">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="mediaSearch" type="search" placeholder="搜索素材">
+            </label>
+            <button class="icon-btn dark" id="importMediaBtn" title="导入素材文件夹" aria-label="导入素材文件夹">＋</button>
+          </div>
+          <div class="media-count" id="mediaCount">8 个素材 · 本地</div>
+          <div class="media-list" id="mediaList"></div>
+          <div class="media-footer">
+            <button class="link-btn" id="linkAllBtn">按分镜自动匹配 →</button>
+          </div>
+        </aside>
+
+        <section class="stage">
+          <div class="stage-bar">
+            <span class="stage-label">镜头 <strong id="stageShotNo">01</strong> / 06</span>
+            <span class="stage-type" id="stageType">地图</span>
+            <span class="stage-spacer"></span>
+            <span class="stage-resolution">1920×1080 · 25fps</span>
+            <button class="icon-btn dark" id="fitBtn" title="适配窗口" aria-label="适配窗口">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+            </button>
+          </div>
+
+          <div class="stage-canvas" id="stageCanvas">
+            <div class="stage-scene" id="stageScene"></div>
+            <div class="stage-overlay">
+              <div class="placeholder-badge">画面占位 · 可绑定素材</div>
+              <div class="placeholder-text" id="stageVisual">罗马帝国全盛版图，地中海区域缓慢推近，标出罗马城。</div>
+              <div class="placeholder-sub" id="stageNarration">“公元 3 世纪，罗马帝国已经统治地中海世界近三百年。”</div>
+            </div>
+            <div class="stage-material-tag" id="stageMaterial">未绑定素材</div>
+          </div>
+
+          <div class="transport">
+            <button class="play-large" id="playBtn" aria-label="播放">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>
+            </button>
+            <span class="transport-time" id="transportTime">00:00 / 01:12</span>
+            <div class="transport-scrub"><div id="transportProgress"></div></div>
+            <span class="transport-hint">空格播放 · 点击时间线切换镜头</span>
+          </div>
+
+          <div class="timeline-area">
+            <div class="timeline-toolbar">
+              <div class="timeline-title">时间线 <span>· 预演</span></div>
+              <div class="timeline-tools">
+                <button class="tool-chip is-active">选择</button>
+                <button class="tool-chip">切割</button>
+                <button class="tool-chip">吸附</button>
+              </div>
+              <span class="zoom">− &nbsp; 100% &nbsp; ＋</span>
+            </div>
+            <div class="timeline-shell">
+              <div class="track-labels">
+                <span class="ruler-space"></span>
+                <span>V1</span>
+                <span>A1</span>
+                <span>T1</span>
+              </div>
+              <div class="timeline-main">
+                <div class="ruler" id="ruler"></div>
+                <div class="tracks" id="timelineTracks">
+                  <div class="track" data-track="video" id="videoTrack"></div>
+                  <div class="track" data-track="audio" id="audioTrack"></div>
+                  <div class="track" data-track="text" id="textTrack"></div>
+                  <div class="playhead" id="playhead"></div>
+                </div>
+                <div class="timeline-empty-hint">拖入素材，或从左侧把素材绑定到当前镜头</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="inspector">
+          <div class="inspector-head">
+            <div>
+              <div class="mini-label">SHOT INSPECTOR</div>
+              <h2>镜头 <span id="inspectorNo">01</span></h2>
+            </div>
+            <span class="adopt-chip" id="inspectorAdopt">已采用</span>
+          </div>
+          <div class="inspector-body">
+            <label class="field dark-field">
+              <span>画面描述</span>
+              <textarea id="visualInput" rows="4"></textarea>
+            </label>
+            <div class="two-fields dark-fields">
+              <label class="field dark-field"><span>时长</span><select id="durationSelect"><option>10s</option><option>12s</option><option>14s</option><option>8s</option></select></label>
+              <label class="field dark-field"><span>转场</span><select><option>缓推 / 叠化</option><option>硬切</option><option>叠化</option><option>声音先入</option></select></label>
+            </div>
+            <div class="bind-card">
+              <div class="bind-head"><span>本地素材</span><button class="text-btn" id="matchMaterialBtn">自动匹配</button></div>
+              <div class="bind-body" id="bindBody">
+                <span class="bind-empty">这个镜头还没有绑定素材</span>
+              </div>
+            </div>
+            <label class="field dark-field">
+              <span>旁白</span>
+              <textarea id="narrationInput" rows="3"></textarea>
+            </label>
+            <div class="inspector-note">
+              <span class="note-dot"></span>
+              改动会即时更新左侧预览和时间线；真实版本会写回 storyboard.json。
+            </div>
+          </div>
+          <div class="inspector-footer">
+            <button class="btn btn-ghost-dark" id="prevShotBtn">← 上一镜</button>
+            <button class="btn btn-ghost-dark" id="nextShotBtn">下一镜 →</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ============ STEP 3 ============ -->
+    <main class="page export-page" id="step3" hidden>
+      <div class="page-heading export-heading">
+        <div class="eyebrow">EXPORT · 最后一步</div>
+        <h1>把预演带回剪映。</h1>
+        <p>剪映没有公开的草稿插件 API。最稳的方式是导出素材包和分镜表；直接生成草稿文件属于实验能力，取决于剪映版本。</p>
+      </div>
+
+      <div class="export-grid">
+        <article class="export-card recommended">
+          <div class="export-top"><span class="export-badge">推荐</span><span class="export-icon">▦</span></div>
+          <h2>素材包 + 分镜表</h2>
+          <p>把每个镜头的占位图、素材清单、旁白和时长整理成一个文件夹，拖进剪映即可继续。</p>
+          <ul>
+            <li><span>storyboard.json</span> 完整分镜数据</li>
+            <li><span>assets/</span> 已绑定的本地素材副本</li>
+            <li><span>shotlist.csv</span> 可读分镜表</li>
+            <li><span>narration.srt</span> 旁白字幕</li>
+          </ul>
+          <button class="export-btn" data-export="pack">导出素材包</button>
+        </article>
+
+        <article class="export-card">
+          <div class="export-top"><span class="export-badge experimental">实验</span><span class="export-icon">◧</span></div>
+          <h2>剪映草稿</h2>
+          <p>直接生成剪映的 draft 工程，导入后保留轨道和占位片段。版本升级可能导致打不开。</p>
+          <div class="version-row"><span>目标版本</span><strong>剪映专业版 6.x</strong></div>
+          <div class="export-warning">没有官方 API，需做版本适配与备份，不建议作为唯一交付。</div>
+          <button class="export-btn ghost" data-export="draft">生成剪映草稿</button>
+        </article>
+
+        <article class="export-card">
+          <div class="export-top"><span class="export-badge neutral">通用</span><span class="export-icon">◇</span></div>
+          <h2>XML / EDL</h2>
+          <p>给 Premiere、DaVinci 等工具使用。适合你以后换剪辑软件，不依赖剪映草稿格式。</p>
+          <ul>
+            <li><span>timeline.xml</span> 时间线与素材引用</li>
+            <li><span>timeline.edl</span> 通用剪辑表</li>
+            <li><span>README.txt</span> 导入说明</li>
+          </ul>
+          <button class="export-btn ghost" data-export="xml">导出 XML / EDL</button>
+        </article>
+      </div>
+
+      <div class="export-bottom">
+        <div class="export-target">
+          <span class="mini-label">输出位置</span>
+          <code id="exportPath">D:\VideoProjects\罗马帝国\export\</code>
+          <button class="text-btn" id="chooseExportBtn">选择</button>
+        </div>
+        <div class="export-bottom-actions">
+          <button class="btn btn-soft" id="backToEditorBtn">← 返回预演</button>
+          <button class="btn btn-primary" id="finishBtn">完成</button>
+        </div>
+      </div>
+
+      <div class="compat-note">
+        <strong>关于剪映的实话：</strong>
+        对剪映草稿的第三方读写不是官方支持的能力。这个产品会优先保证素材包和分镜表可用，再把“草稿生成”作为实验功能，避免你辛苦做的项目因为版本升级打不开。
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal-backdrop" id="apiModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <div><div class="mini-label">SETTINGS</div><h2>AI 与本地设置</h2></div>
+        <button class="icon-btn" id="closeApiModal" aria-label="关闭">×</button>
+      </div>
+      <label class="field"><span>DeepSeek API Key</span><input type="password" value="sk-demo-••••••••••••"></label>
+      <label class="field"><span>默认输出目录</span><input value="D:\VideoProjects\"></label>
+      <p class="hint">真实版本会把 Key 存进系统钥匙串，项目文件只保存模型名和目录。</p>
+      <div class="modal-actions"><button class="btn btn-soft" id="cancelApiModal">取消</button><button class="btn btn-primary" id="saveApiModal">保存</button></div>
+    </div>
+  </div>
+
+  <script src="studio.js"></script>
+</body>
+</html>
