@@ -2,7 +2,7 @@
   "name": "storyboard-studio",
   "version": "0.3.0",
   "private": true,
-  "description": "项目化视频分镜、文稿处理与本节装配工作台",
+  "description": "分镜台 Studio：视频配音稿、分镜与交付制作台（v0.3.0 原型，桌面端 v0.2.0）",
   "main": "main.js",
   "author": "compassscout",
   "license": "MIT",
@@ -10,9 +10,56 @@
     "node": ">=20"
   },
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable --x64 --publish never"
   },
   "devDependencies": {
-    "electron": "^45.1.0"
+    "electron": "^45.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.compassscout.storyboardstudio",
+    "productName": "StoryboardStudio",
+    "copyright": "Copyright © 2026 compassscout",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "samples.js",
+      "main.js",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "分镜台 Studio",
+      "artifactName": "storyboard-studio-${version}-setup-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "storyboard-studio-${version}-portable-${arch}.${ext}"
+    }
   }
 }
