@@ -39,6 +39,12 @@ jobs:
             release/*.yml
           if-no-files-found: error
 
+      - name: Upload to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload v0.3.0 release/*.exe --clobber
+
       - name: Attach to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
