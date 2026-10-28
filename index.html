@@ -2,14 +2,365 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=studio.html">
-  <title>分镜台 Studio</title>
-  <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #171512; color: #e9dfd1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; }
-    a { color: #d77b58; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>分镜台 Studio · 项目 → 集 → 章 → 节</title>
+  <meta name="description" content="本地网页演示：项目、文稿处理、镜头表、装配与导出。">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <p>正在打开分镜台 Studio… <a href="studio.html">如果没有自动跳转，点这里</a></p>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#" id="brandHome">
+        <span class="brand-mark">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none" aria-hidden="true">
+            <rect x="3" y="5" width="26" height="20" rx="5" fill="currentColor"/>
+            <path d="M3 11h26M9 5v6M23 5v6" stroke="#1c1a17" stroke-width="1.6"/>
+            <path d="m13 16 7 4-7 4v-8Z" fill="#f5eee3"/>
+          </svg>
+        </span>
+        <span class="brand-copy"><strong>分镜台</strong><small>STUDIO</small></span>
+      </a>
+
+      <div class="crumb" id="topCrumb">项目库</div>
+
+      <div class="top-actions">
+        <div class="theme-switch" id="themeSwitch" aria-label="背景颜色">
+          <span class="theme-label">背景</span>
+          <button class="theme-dot is-active" data-theme="white" title="白底" aria-label="白底"></button>
+          <button class="theme-dot" data-theme="gray" title="灰底" aria-label="灰底"></button>
+          <button class="theme-dot" data-theme="dark" title="黑底" aria-label="黑底"></button>
+        </div>
+        <span class="local-pill"><i></i>本地演示</span>
+        <button class="icon-btn" id="helpBtn" title="界面说明" aria-label="界面说明">?</button>
+      </div>
+    </header>
+
+    <main class="projects-page" id="projectsView">
+      <div class="projects-head">
+        <div>
+          <div class="eyebrow">PROJECTS · 项目库</div>
+          <div class="series-title-row">
+            <h1>项目</h1>
+            <span class="pill">可以增删</span>
+          </div>
+          <p>一个项目是一条视频。点项目进入它的分集与章节；项目之间互不影响。</p>
+        </div>
+        <div class="series-head-actions">
+          <button class="btn btn-primary" id="newProjectBtn">＋ 新建项目</button>
+        </div>
+      </div>
+      <div class="series-stats" id="projectStats"></div>
+      <div class="projects-list-wrap">
+        <div class="list-head">
+          <div><span class="mini-label">ALL PROJECTS</span><h2>全部项目</h2></div>
+          <span class="muted" id="projectCount"></span>
+        </div>
+        <div class="project-grid" id="projectList"></div>
+      </div>
+    </main>
+
+    <main class="new-project-page" id="newProjectView" hidden>
+      <div class="new-project-head">
+        <button class="back-btn" id="newProjectBack">← 项目库</button>
+        <div class="eyebrow">NEW PROJECT · 新建项目</div>
+        <h1>先把原始文稿放进来</h1>
+        <p>新建项目不会直接生成镜头表。创建后先进入「文稿处理」，处理完基础错误、定稿，再开始拆分镜。</p>
+      </div>
+      <div class="new-project-layout">
+        <section class="new-project-card">
+          <label class="field new-field">
+            <span>项目名称</span>
+            <input id="newProjectName" value="未命名项目" placeholder="例如：一座港口城市">
+          </label>
+          <label class="field new-field">
+            <span>原始文稿</span>
+            <textarea id="newProjectScript" rows="12" placeholder="把原始文稿粘贴到这里。先不改结构，先处理错字、标点、空格和明显病句。"></textarea>
+          </label>
+          <div class="new-project-source-actions">
+            <button class="btn btn-soft" id="newProjectSample">载入示例文稿</button>
+            <button class="btn btn-ghost" id="newProjectFile">选择 .txt / .md</button>
+            <input type="file" id="newProjectFileInput" accept=".txt,.md,text/plain,text/markdown" hidden>
+            <span class="muted" id="newProjectCharCount">0 字</span>
+          </div>
+        </section>
+        <aside class="new-project-side">
+          <div class="new-step is-done"><span>1</span><div><strong>项目信息</strong><small>名称 · 一条视频</small></div></div>
+          <div class="new-step is-active"><span>2</span><div><strong>原始文稿</strong><small>粘贴 / 导入</small></div></div>
+          <div class="new-step"><span>3</span><div><strong>文稿处理</strong><small>校订 · 定稿</small></div></div>
+          <div class="new-side-note">创建后不会先出现镜头表；会先进入文稿处理页面。</div>
+          <button class="btn btn-primary new-create-btn" id="newProjectCreate">创建项目，进入文稿处理 →</button>
+        </aside>
+      </div>
+    </main>
+
+    <main class="series-page" id="seriesView" hidden>
+      <div class="series-head">
+        <div class="series-head-main">
+          <div class="eyebrow">SERIES · 系列</div>
+          <div class="series-title-row">
+            <h1 id="seriesTitle">示例项目</h1>
+            <span class="pill" id="seriesSubtitle">1 集 · 示例</span>
+          </div>
+          <p>先选一集，再进入这一集的章节与镜头。每完成一小节，都会记录进度；每完成一集，就是一个可导出的交付点。</p>
+        </div>
+        <div class="series-head-actions">
+          <button class="btn btn-ghost" id="backToProjectsBtn">← 项目库</button>
+          <button class="btn btn-ghost" id="renameProjectBtn">重命名</button>
+          <button class="btn btn-ghost" id="seriesHelp">怎么使用 →</button>
+          <button class="btn btn-primary" id="continueBtn">继续第 1 集</button>
+        </div>
+      </div>
+      <div class="series-stats" id="seriesStats"></div>
+      <div class="series-layout">
+        <section class="episode-list-wrap">
+          <div class="list-head">
+            <div><span class="mini-label">EPISODES</span><h2>分集</h2></div>
+            <span class="muted" id="episodeCount"></span>
+          </div>
+          <div class="episode-list" id="episodeList"></div>
+        </section>
+        <aside class="series-side" id="seriesSide"></aside>
+      </div>
+    </main>
+
+    <main class="workspace" id="workspaceView" hidden>
+      <div class="workspace-top">
+        <button class="back-btn" id="backToSeries">← 系列</button>
+        <div class="workspace-title">
+          <div class="workspace-kicker" id="workspaceKicker">第 1 集 · 项目</div>
+          <div class="workspace-name" id="workspaceName">第一章 正文</div>
+        </div>
+        <div class="mode-tabs" id="modeTabs">
+          <button class="mode-tab is-active" data-mode="proof">文稿处理</button>
+          <button class="mode-tab" data-mode="script">文稿 / 镜头表</button>
+          <button class="mode-tab" data-mode="assembly">装配</button>
+          <button class="mode-tab" data-mode="export">导出本集</button>
+        </div>
+        <div class="workspace-progress">
+          <span id="workspaceProgressLabel">0/1 节</span>
+          <span class="tiny-bar"><i id="workspaceProgressBar"></i></span>
+          <span id="workspaceShotsLabel">0/0 镜</span>
+        </div>
+      </div>
+
+      <div class="sheetbar">
+        <span class="sheet-label">Excel 工作簿</span>
+        <button class="sheet-tab is-active" id="sheetChapter">01 第一章 正文</button>
+        <button class="sheet-tab" id="sheetOverview">00 总览</button>
+        <button class="sheet-tab sheet-ghost" id="newChapterSheet">＋ 章</button>
+        <button class="sheet-link" id="exportWorkbook">导出工作簿 ↓</button>
+      </div>
+
+      <div class="workspace-grid">
+        <aside class="tree-panel">
+          <div class="tree-head">
+            <div><span class="mini-label">STRUCTURE</span><h2>章节目录</h2></div>
+            <span class="muted" id="treeMeta"></span>
+          </div>
+          <div class="tree-filter" id="treeFilter">
+            <button class="filter-chip is-active" data-filter="all">全部</button>
+            <button class="filter-chip" data-filter="todo">待处理</button>
+            <button class="filter-chip" data-filter="done">已定稿</button>
+          </div>
+          <div class="section-tree" id="sectionTree"></div>
+          <div class="tree-foot">
+            <span class="tree-foot-note">点小节，处理这一节</span>
+            <button class="text-btn" id="addSectionBtn">＋ 小节</button>
+          </div>
+        </aside>
+
+        <section class="center-panel">
+          <div class="center-mode proof-mode" id="proofMode">
+            <div class="section-head">
+              <div class="section-head-main">
+                <div class="section-kicker" id="proofKicker"></div>
+                <div class="section-title-row">
+                  <h2 id="proofTitle">原始文稿</h2>
+                  <span class="status-badge is-active" id="proofStatus">未处理</span>
+                </div>
+                <p id="proofMeta">尚未检查本节文稿</p>
+              </div>
+              <div class="section-actions">
+                <button class="btn btn-soft" id="checkProofBtn">检查本节</button>
+                <button class="btn btn-primary" id="completeProofBtn">完成本节 →</button>
+              </div>
+            </div>
+            <div class="proof-toolbar">
+              <div class="proof-view-tabs" id="proofViewTabs">
+                <button class="proof-view is-active" data-view="compare">对照</button>
+                <button class="proof-view" data-view="original">原稿</button>
+                <button class="proof-view" data-view="revised">修订</button>
+              </div>
+              <div class="proof-rule"><span>只改字句，不改结构</span><em>保护词</em></div>
+            </div>
+            <article class="proof-paper">
+              <div class="proof-paper-head">
+                <span id="proofPaperTitle">当前小节</span>
+                <span>原稿 v1 → 修订 v2</span>
+              </div>
+              <div class="proof-document" id="proofDocument"></div>
+              <div class="proof-paper-foot">
+                <span>点击高亮，右侧查看修改</span>
+                <button class="text-btn" id="copyProofBtn">复制定稿文案</button>
+              </div>
+            </article>
+          </div>
+
+          <div class="center-mode" id="scriptMode" hidden>
+            <div class="proof-lock" id="scriptProofNotice" hidden>
+              <span>!</span>
+              <div><strong>这一节的文稿还没有定稿</strong><br>先回「文稿处理」采用或保留修改，再设计镜头表。</div>
+            </div>
+            <div class="section-head">
+              <div class="section-head-main">
+                <div class="section-kicker" id="scriptKicker"></div>
+                <div class="section-title-row">
+                  <h2 id="scriptTitle">当前小节</h2>
+                  <span class="status-badge is-active" id="scriptStatus">进行中</span>
+                </div>
+                <p id="scriptMeta"></p>
+              </div>
+              <div class="section-actions">
+                <button class="btn btn-soft" id="copySectionBtn">复制整节文案</button>
+                <button class="btn btn-ghost" id="regenSectionBtn">重新拆分本节</button>
+              </div>
+            </div>
+            <div class="script-layout">
+              <article class="script-card">
+                <div class="card-label"><span>整节文案 · 用于声音克隆</span><span id="scriptChars"></span></div>
+                <div class="script-text" id="scriptText"></div>
+              </article>
+              <div class="shot-table-card">
+                <div class="card-label"><span>本节镜头表 · Excel 预览</span><span id="tableCount"></span></div>
+                <div class="shot-table-wrap">
+                  <table class="shot-table">
+                    <thead><tr><th>#</th><th>时长</th><th>画面描述</th><th>类型</th><th>状态</th></tr></thead>
+                    <tbody id="shotTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="center-mode" id="assemblyMode" hidden>
+            <div class="assembly-head">
+              <div>
+                <div class="section-kicker" id="assemblyKicker"></div>
+                <div class="assembly-title-row">
+                  <h2 id="assemblyTitle">当前小节</h2>
+                  <span class="status-badge is-active" id="assemblyStatus">进行中</span>
+                </div>
+              </div>
+              <div class="assembly-tools">
+                <div class="assembly-scope">
+                  <span>播放范围</span>
+                  <button class="scope-chip is-active">本节</button>
+                  <button class="scope-chip">本章</button>
+                </div>
+                <label class="size-select">
+                  <span>尺寸</span>
+                  <select id="sizeSelect">
+                    <option value="16:9|1920×1080|1080p 横屏" selected>16:9 · 1080p 横屏</option>
+                    <option value="16:9|1280×720|720p 横屏">16:9 · 720p 横屏</option>
+                    <option value="16:9|3840×2160|4K 横屏">16:9 · 4K 横屏</option>
+                    <option value="9:16|1080×1920|1080p 竖屏">9:16 · 1080p 竖屏</option>
+                    <option value="4:5|1080×1350|4:5 竖版">4:5 · 竖版</option>
+                    <option value="1:1|1080×1080|方形">1:1 · 方形</option>
+                    <option value="21:9|2560×1080|宽银幕">21:9 · 宽银幕</option>
+                    <option value="4:3|1440×1080|经典 4:3">4:3 · 经典</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="player-toolbar">
+              <div class="player-size-meta"><span class="mini-label">PREVIEW SIZE</span><strong id="playerSizeMeta">16:9 · 1920×1080</strong></div>
+              <span class="player-size-hint">画幅默认 16:9，可随成片平台切换</span>
+            </div>
+            <div class="player-wrap" id="playerWrap">
+              <div class="player-canvas" id="playerCanvas"><div class="player-frame" id="playerFrame"></div></div>
+              <div class="player-caption">
+                <span class="badge" id="playerBadge"></span>
+                <span id="playerVisual">画面建议</span>
+              </div>
+              <div class="transport">
+                <button class="play-btn" id="playBtn" aria-label="播放">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>
+                </button>
+                <span class="transport-time" id="playerTime">00:00 / 00:00</span>
+                <div class="transport-scrub"><i id="playerProgress"></i></div>
+                <span class="transport-hint">空格播放 · 点时间线切换镜头</span>
+              </div>
+            </div>
+            <div class="timeline-card">
+              <div class="timeline-head">
+                <div><span class="mini-label">SECTION TIMELINE</span><strong>本节时间线</strong></div>
+                <span class="muted" id="timelineMeta"></span>
+              </div>
+              <div class="timeline-ruler" id="timelineRuler"></div>
+              <div class="timeline-track" id="timelineTrack"></div>
+              <div class="timeline-footer">
+                <button class="text-btn" id="prevSectionBtn">← 上一节</button>
+                <span class="muted" id="timelineSectionName"></span>
+                <button class="text-btn" id="nextSectionBtn">下一节 →</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="center-mode export-mode" id="exportMode" hidden>
+            <div class="section-head">
+              <div class="section-head-main">
+                <div class="section-kicker">EXPORT · 本集</div>
+                <div class="section-title-row"><h2>导出本集初稿</h2><span class="pill">当前项目</span></div>
+                <p>只导出这一集的结构；可以导出 CSV 给 Excel，或继续在剪辑软件里装配。</p>
+              </div>
+            </div>
+            <div class="export-grid">
+              <button class="export-card is-selected">
+                <span class="export-radio"></span>
+                <strong>素材包 + 分镜表</strong>
+                <small>storyboard.json · shotlist.csv · 旁白 SRT · 素材目录</small>
+                <em>剪映 / Premiere / Kdenlive 都能接</em>
+              </button>
+              <button class="export-card">
+                <span class="export-radio"></span>
+                <strong>CSV / Excel</strong>
+                <small>小节、镜头、时长、画面建议、状态</small>
+                <em>可下载 CSV，用 Excel 打开</em>
+              </button>
+              <button class="export-card">
+                <span class="export-radio"></span>
+                <strong>XML / EDL / MLT</strong>
+                <small>时间线结构 · 素材引用 · 基础剪辑</small>
+                <em>目标：Premiere / DaVinci / Kdenlive</em>
+              </button>
+            </div>
+            <div class="export-check-card">
+              <div class="check-title"><span>导出前检查</span><span id="exportCheckSummary">3 项通过 · 1 项提醒</span></div>
+              <div class="check-row ok"><i>✓</i><span>当前章节有镜头表</span></div>
+              <div class="check-row warn" id="exportMissingRow"><i>!</i><span id="exportMissing">还有镜头未绑定素材</span></div>
+              <div class="check-row ok"><i>✓</i><span>整节文案已保留，可继续做声音克隆</span></div>
+              <div class="check-row ok"><i>✓</i><span id="exportPath">D:\VideoProjects\示例项目\export\</span></div>
+            </div>
+            <button class="btn btn-primary export-now" id="exportNowBtn">导出本集初稿（演示）</button>
+            <button class="btn btn-soft export-now" id="exportCsvBtn" style="margin-top:8px">下载 CSV（Excel 可打开）</button>
+          </div>
+        </section>
+
+        <aside class="right-panel" id="rightPanel"></aside>
+      </div>
+
+      <div class="statusbar">
+        <span><i class="status-dot"></i>本地演示 · 不会保存文件</span>
+        <span id="statusEpisode"></span>
+        <span id="statusSection"></span>
+        <span class="status-spacer"></span>
+        <span id="statusProgress"></span>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="samples.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

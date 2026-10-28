@@ -1,939 +1,1426 @@
 'use strict';
 
-/* =========================================================
-   演示数据
-   ========================================================= */
-
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-}[char]));
-
-function option(scene, title, desc, type, duration, transition, reason, keywords, source = 'Wikimedia Commons', license = 'Public Domain') {
-  return { scene, title, desc, type, duration, transition, reason, keywords, source, license };
-}
-
-const project = {
-  title: '罗马帝国为什么会分裂？',
-  category: '历史 · 知识',
+const types = ['地图', '人物', '档案', '遗址', '图表', '情景再现'];
+const candidateMap = {
+  地图: ['区域地图_01', '地形示意图', '路线图'],
+  人物: ['人物资料图', '工作照', '群像'],
+  档案: ['档案封面', '旧报纸版面', '手稿'],
+  遗址: ['旧址空镜', '建筑细节', '街景'],
+  图表: ['时间线图表', '结构示意图', '数据图'],
+  情景再现: ['雨夜街道', '车站人流', '清晨村口'],
 };
 
-const shots = [
-  {
-    id: 's1',
-    line: '公元 3 世纪，罗马帝国已经统治地中海世界近三百年。',
-    lineType: '背景',
-    optionIndex: 0,
-    adopted: true,
-    adoptedOption: null,
-    options: [
-      option('map', '帝国全盛版图', '从地中海全图缓慢推近到意大利半岛。', '地图', 10, '缓推 / 叠化', '开篇先建立空间感，让观众知道“罗马”不是一个抽象名词，而是一个横跨三大洲的帝国。', ['Roman Empire map', '3rd century', 'Mediterranean']),
-      option('document', '泛黄的行省地图', '古代地图手稿上标出罗马行省与主要道路。', '史料', 9, '叠化', '用史料质感替代现代地图，先定下“历史纪录片”的视觉基调。', ['ancient Roman map', 'manuscript', 'Roman provinces'], 'Internet Archive', 'Public Domain'),
-      option('timeline', '三世纪时间轴', '从公元 200 年缓慢滑到 300 年。', '图表', 8, '横移', '先给时间坐标，后面讲“五十年换二十多个皇帝”时观众不会失去方向。', ['Roman Empire timeline', '3rd century crisis']),
-    ],
-  },
-  {
-    id: 's2',
-    line: '但从公元 235 年开始，帝国在五十年里换了二十多位皇帝。',
-    lineType: '数据',
-    optionIndex: 0,
-    adopted: true,
-    adoptedOption: null,
-    options: [
-      option('coins', '皇帝金币蒙太奇', '三枚金币特写快速切换，叠出皇帝名单。', '史料', 14, '快切 / 叠化', '用金币而不是文字列表，把“皇帝更替频繁”变成可感知的视觉节奏。', ['Roman emperor coins', 'denarius', 'Crisis of the Third Century']),
-      option('timeline', '半个世纪的皇帝名单', '时间轴上的头像快速刷新，数字不断累加。', '图表', 12, '连续快切', '适合强调数字本身，让“五十年的二十多位皇帝”形成冲击。', ['Roman emperors timeline', '235 284', 'barracks emperors']),
-      option('soldiers', '边军团与皇位更替', '士兵拥立将领的剪影，旗帜在风中翻动。', '情景', 11, '硬切', '把皇位更替和军队联系起来，为下一句“军队拥立皇帝”做铺垫。', ['Roman legion', 'barracks emperor', 'Roman army']),
-    ],
-  },
-  {
-    id: 's3',
-    line: '军队拥立皇帝，元老院无力约束，边境压力同时加剧。',
-    lineType: '冲突',
-    optionIndex: 0,
-    adopted: false,
-    adoptedOption: null,
-    options: [
-      option('senate', '元老院辩论', '昏暗大厅里，元老们争论，声音逐渐被军靴声盖过。', '情景', 13, '声音先入', '这一句有三个主体，先用元老院表现“无力约束”，再用声音把军队带进来。', ['Roman Senate', 'senate debate', 'Roman politics']),
-      option('soldiers', '边境上的军团', '军团旗帜、矛尖和城墙剪影交替出现。', '情景', 11, '硬切', '把“边境压力”视觉化，避免整段都是室内政治戏。', ['Roman legion', 'Roman frontier', 'limes']),
-      option('document', '三世纪危机文献', '泛黄纸页上出现“危机”“内战”“蛮族入侵”等批注。', '史料', 9, '叠化', '用文献关键词快速交代三重压力，适合信息密度高的段落。', ['Crisis of the Third Century', 'Roman documents'], 'Internet Archive', 'Public Domain'),
-    ],
-  },
-  {
-    id: 's4',
-    line: '戴克里先尝试把帝国一分为二，由两位奥古斯都共同治理。',
-    lineType: '转折',
-    optionIndex: 0,
-    adopted: false,
-    adoptedOption: null,
-    options: [
-      option('tetrarchy', '四帝共治', '地图切成四块，两位奥古斯都与两位凯撒的徽章出现。', '地图', 12, '分屏', '这是全片的制度转折点，用“四块地图 + 四枚徽章”把抽象改革变成结构。', ['Tetrarchy map', 'Diocletian', 'Augustus Caesar']),
-      option('map', '帝国一分为二', '从单一版图拉出一条分割线，东西两侧变色。', '地图', 10, '缓推', '不急着讲四帝，先用最简单的“二分”让观众抓住改革核心。', ['Division of Roman Empire', 'Diocletian map']),
-      option('capitals', '两座新都城', '罗马与尼科米底亚之间的道路被点亮。', '地图', 9, '横移', '把制度变化落到地理上，为后文“东西分裂”埋伏笔。', ['Nicomedia', 'Rome', 'Diocletian capital']),
-    ],
-  },
-  {
-    id: 's5',
-    line: '这次改革暂时稳住了局势，却也埋下了东西分裂的种子。',
-    lineType: '观点',
-    optionIndex: 0,
-    adopted: false,
-    adoptedOption: null,
-    options: [
-      option('capitals', '两座都城', '罗马与君士坦丁堡的柱廊、穹顶左右并置。', '地图', 11, '叠化', '用双城并置表达“暂时稳定”，同时让观众感觉两套权力中心正在形成。', ['Rome', 'Constantinople', 'late Roman empire']),
-      option('divided', '裂缝出现', '地图上出现一条细线，慢慢变粗、变红。', '地图', 9, '缓推', '把“种子”做成视觉隐喻：不是立刻分裂，而是一条逐渐扩大的裂缝。', ['Roman Empire split', 'division map']),
-      option('document', '改革后的诏令', '羊皮纸上的拉丁文与红色印章。', '史料', 8, '叠化', '用诏令的权威感表现“改革暂时稳住局势”，再在结尾转暗。', ['Edict of Diocletian', 'Roman law'], 'Internet Archive', 'Public Domain'),
-    ],
-  },
-  {
-    id: 's6',
-    line: '到 395 年，帝国正式分裂，之后再没有真正统一。',
-    lineType: '结论',
-    optionIndex: 0,
-    adopted: false,
-    adoptedOption: null,
-    options: [
-      option('divided', '395 年正式分裂', '地图从中间裂开，西罗马与东罗马分别亮起。', '地图', 12, '缓推 / 定格', '结尾需要一张明确的分裂图，把前面所有铺垫收束成一个不可逆的结果。', ['Division of Roman Empire 395', 'Western Roman Empire', 'Eastern Roman Empire']),
-      option('map', '帝国最后的统一版图', '全图慢慢变暗，边界线逐渐消失。', '地图', 10, '缓慢拉远', '用“统一版图的消失”做情绪收尾，比直接切地图更有余味。', ['Roman Empire 395', 'map']),
-      option('timeline', '从 235 到 395', '时间轴从危机起点滑到分裂终点。', '图表', 9, '横移', '适合做总结镜头，把 160 年的因果压缩成一条线。', ['Roman Empire timeline', '395 AD']),
-    ],
-  },
-];
+function pad(n) {
+  return String(n).padStart(2, '0');
+}
 
-shots.forEach((shot) => {
-  shot.adoptedOption = shot.adopted ? shot.options[0] : null;
-});
+function formatTime(seconds) {
+  const value = Math.max(0, Math.round(seconds));
+  return `${pad(Math.floor(value / 60))}:${pad(value % 60)}`;
+}
 
-const materials = [
-  { name: '罗马帝国版图_03', scene: 'map', tags: '地图 · 地中海 · 3世纪' },
-  { name: '三世纪金币特写', scene: 'coins', tags: '金币 · 皇帝 · 史料' },
-  { name: '元老院辩论_油画', scene: 'senate', tags: '元老院 · 人物 · 室内' },
-  { name: '罗马军团_边境', scene: 'soldiers', tags: '军队 · 边境 · 旗帜' },
-  { name: '四帝共治_示意图', scene: 'tetrarchy', tags: '制度 · 地图 · 分屏' },
-  { name: '罗马与君士坦丁堡', scene: 'capitals', tags: '双城 · 建筑 · 对比' },
-  { name: '395年帝国分裂图', scene: 'divided', tags: '地图 · 分裂 · 结尾' },
-  { name: '古代地图手稿', scene: 'document', tags: '手稿 · 文献 · 质感' },
-];
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
 
-let activeId = 's1';
-let activeTab = 'ai';
-let audioElapsed = 0;
-let audioTimer = null;
-let isPlaying = false;
-let toastTimer = null;
+function splitArticleSections(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const sections = [];
+  let current = { title: '正文', body: [] };
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^##\s+/.test(trimmed)) {
+      if (current.body.join('').trim()) sections.push(current);
+      current = { title: trimmed.replace(/^##\s+/, ''), body: [] };
+    } else {
+      current.body.push(line);
+    }
+  }
+  if (current.body.join('').trim()) sections.push(current);
 
-/* =========================================================
-   SVG 场景
-   ========================================================= */
+  let result = sections
+    .map((item) => ({
+      title: item.title || '正文',
+      text: item.body.join('\n').trim(),
+    }))
+    .filter((item) => item.text);
 
-function sceneSvg(scene) {
-  const wrap = (background, inner) => `
-    <svg class="scene-svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(scene)}">
-      <rect width="800" height="450" fill="${background}"/>
-      ${inner}
-    </svg>`;
+  if (!result.length) result = [{ title: '正文', text: String(text || '').trim() }];
 
-  const scenes = {
-    map: wrap('#dfd1b8', `
-      <g opacity=".19" stroke="#7e6b53" stroke-width="1">
-        ${[80, 160, 240, 320, 400, 480, 560, 640, 720].map((x) => `<path d="M${x} 0v450"/>`).join('')}
-        ${[70, 140, 210, 280, 350, 420].map((y) => `<path d="M0 ${y}h800"/>`).join('')}
-      </g>
-      <path d="M0 295 C100 282 170 300 250 332 C340 370 500 378 800 330 L800 450 L0 450Z" fill="#9db6ad"/>
-      <path d="M90 74 C180 38 300 38 382 68 C448 92 520 88 596 68 L682 126 C640 166 566 175 505 204 C430 240 355 254 296 238 C224 218 174 174 136 142Z" fill="#c57a57"/>
-      <path d="M615 104 C680 126 736 176 758 236 C706 260 652 254 610 232 C578 214 566 174 580 142Z" fill="#b76a4b"/>
-      <path d="M340 240 C370 258 390 282 384 302 C356 314 330 300 318 278 C312 260 322 248 340 240Z" fill="#d9c49f"/>
-      <path d="M380 304 C430 300 462 326 448 352 C414 372 374 360 360 336Z" fill="#c9b38c"/>
-      <g fill="#7b6048" opacity=".75">
-        <circle cx="330" cy="222" r="4"/><circle cx="362" cy="214" r="3"/><circle cx="302" cy="188" r="3"/>
-        <circle cx="250" cy="150" r="3"/><circle cx="488" cy="146" r="3"/><circle cx="552" cy="190" r="3"/>
-      </g>
-      <g font-family="Georgia, serif" fill="#6e5b45">
-        <text x="54" y="62" font-size="13" letter-spacing="5" opacity=".72">MARE NOSTRUM</text>
-        <text x="333" y="213" font-size="11" letter-spacing="3">ROMA</text>
-        <text x="548" y="310" font-size="9" letter-spacing="2" opacity=".55">AFRICA</text>
-        <text x="146" y="120" font-size="9" letter-spacing="2" opacity=".55">GALLIA</text>
-      </g>
-      <g transform="translate(698 78)" fill="none" stroke="#7b654d" opacity=".6">
-        <circle r="23" stroke-width="1"/><circle r="16" stroke-width=".7"/>
-        <path d="M0-31v62M-31 0h62" stroke-width=".8"/>
-        <path d="m0-31-4 9h8Z" fill="#7b654d" stroke="none"/>
-      </g>
-      <text x="54" y="414" font-family="Georgia, serif" font-size="9" fill="#6f5d47" opacity=".65" letter-spacing="3">IMPERIUM ROMANUM · III SAECULUM</text>
-    `),
-    coins: wrap('#251f18', `
-      <g opacity=".28" stroke="#d9b36b" stroke-width="1">
-        ${Array.from({ length: 16 }, (_, i) => `<path d="M400 225 L${400 + Math.cos(i / 16 * Math.PI * 2) * 620} ${225 + Math.sin(i / 16 * Math.PI * 2) * 620}"/>`).join('')}
-      </g>
-      ${[
-        [216, 230, 100, 'IMP · CAESAR'],
-        [400, 212, 114, 'SOL · INVICTVS'],
-        [590, 236, 96, 'VICTORIA · AVG'],
-      ].map(([cx, cy, r, label]) => `
-        <g>
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="#a47b3f" stroke="#d8b570" stroke-width="2"/>
-          <circle cx="${cx}" cy="${cy}" r="${r - 12}" fill="none" stroke="#6d4d22" stroke-width="1" opacity=".7"/>
-          <circle cx="${cx}" cy="${cy}" r="${r - 20}" fill="none" stroke="#e2c98e" stroke-width=".6" opacity=".5"/>
-          <path d="M${cx - 30} ${cy + 44} C${cx - 42} ${cy + 18} ${cx - 22} ${cy - 2} ${cx - 10} ${cy - 8} C${cx - 2} ${cy - 42} ${cx + 32} ${cy - 46} ${cx + 38} ${cy - 16} C${cx + 56} ${cy + 2} ${cx + 42} ${cy + 30} ${cx + 26} ${cy + 44}Z" fill="#3b2a18" opacity=".82"/>
-          <path d="M${cx - 18} ${cy - 12} C${cx - 34} ${cy - 2} ${cx - 28} ${cy + 18} ${cx - 12} ${cy + 26}" fill="none" stroke="#d8b570" stroke-width="2" opacity=".55"/>
-          <text x="${cx}" y="${cy + r + 23}" text-anchor="middle" font-family="Georgia, serif" font-size="9" letter-spacing="2" fill="#c9a86b" opacity=".8">${label}</text>
-        </g>
-      `).join('')}
-      <text x="52" y="70" font-family="Georgia, serif" font-size="12" letter-spacing="4" fill="#d8b570" opacity=".65">AES · ARGENTUM · AURUM</text>
-    `),
-    senate: wrap('#2e2119', `
-      <ellipse cx="400" cy="288" rx="320" ry="110" fill="#463326" opacity=".72"/>
-      <path d="M0 360 C140 330 260 350 400 338 C560 324 680 340 800 368 L800 450 L0 450Z" fill="#211814"/>
-      <g fill="#5a4433" opacity=".9">
-        ${[110, 230, 350, 470, 590, 710].map((x) => `
-          <rect x="${x}" y="96" width="26" height="210" rx="2"/>
-          <rect x="${x - 9}" y="88" width="44" height="12" rx="2" fill="#6f5540"/>
-          <rect x="${x - 7}" y="306" width="40" height="10" rx="2" fill="#6f5540"/>
-        `).join('')}
-      </g>
-      <path d="M400 0 L400 155" stroke="#c49a5a" stroke-width="1" opacity=".4"/>
-      <ellipse cx="400" cy="170" rx="115" ry="55" fill="#d7ad6a" opacity=".11"/>
-      <g fill="#17110e">
-        ${[280, 345, 400, 455, 520].map((x, index) => `
-          <circle cx="${x}" cy="${278 + (index % 2) * 8}" r="14"/>
-          <path d="M${x - 26} 356 C${x - 30} 318 ${x - 12} 300 ${x} 300 C${x + 16} 300 ${x + 32} 318 ${x + 26} 356Z"/>
-        `).join('')}
-      </g>
-      <path d="M600 92 L680 92 L680 270 L600 270Z" fill="#6f3328" opacity=".55"/>
-      <path d="M638 92 L638 270" stroke="#bd8d58" stroke-width="1" opacity=".35"/>
-      <text x="52" y="418" font-family="Georgia, serif" font-size="10" fill="#c9a774" opacity=".55" letter-spacing="3">SENATVS · ROMANVS</text>
-    `),
-    tetrarchy: wrap('#d8c9ae', `
-      <g opacity=".2" stroke="#725d45" stroke-width="1">
-        ${[100, 200, 300, 400, 500, 600, 700].map((x) => `<path d="M${x} 0v450"/>`).join('')}
-        ${[90, 180, 270, 360].map((y) => `<path d="M0 ${y}h800"/>`).join('')}
-      </g>
-      <path d="M84 96 H380 V224 H84Z" fill="#a85e43" opacity=".78"/>
-      <path d="M420 96 H716 V224 H420Z" fill="#4e7770" opacity=".78"/>
-      <path d="M84 250 H380 V378 H84Z" fill="#c59b55" opacity=".72"/>
-      <path d="M420 250 H716 V378 H420Z" fill="#6f5f86" opacity=".72"/>
-      <path d="M84 96 H716 V378 H84Z" fill="none" stroke="#5d4935" stroke-width="2"/>
-      <path d="M400 96 V378" stroke="#5d4935" stroke-width="2"/>
-      <path d="M84 237 H716" stroke="#5d4935" stroke-width="2"/>
-      <g>
-        <circle cx="224" cy="163" r="43" fill="#e0cda9" stroke="#755c40" stroke-width="2"/>
-        <circle cx="576" cy="163" r="43" fill="#e0cda9" stroke="#755c40" stroke-width="2"/>
-        <path d="M204 184 C196 163 209 144 228 145 C248 140 260 160 248 183Z" fill="#58432e" opacity=".8"/>
-        <path d="M556 184 C548 163 561 144 580 145 C600 140 612 160 600 183Z" fill="#58432e" opacity=".8"/>
-        <text x="224" y="231" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#5f4933" letter-spacing="2">AUGUSTUS</text>
-        <text x="576" y="231" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#5f4933" letter-spacing="2">AUGUSTUS</text>
-        <text x="224" y="324" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#5f4933" letter-spacing="2">CAESAR</text>
-        <text x="576" y="324" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#5f4933" letter-spacing="2">CAESAR</text>
-      </g>
-      <text x="54" y="428" font-family="Georgia, serif" font-size="10" fill="#5c4834" opacity=".65" letter-spacing="3">TETRARCHIA · DOMINATVS</text>
-    `),
-    capitals: wrap('#282019', `
-      <path d="M0 382 C160 360 280 366 400 374 C560 384 680 366 800 388 L800 450 L0 450Z" fill="#191411"/>
-      <g transform="translate(170 0)" fill="#5a4432">
-        <rect x="0" y="118" width="24" height="220"/><rect x="62" y="118" width="24" height="220"/><rect x="124" y="118" width="24" height="220"/>
-        <rect x="-10" y="104" width="168" height="15" rx="2" fill="#725842"/>
-        <path d="M-18 104 L74 54 L166 104Z" fill="#7c5f47"/>
-        <rect x="-8" y="338" width="164" height="12" fill="#725842"/>
-      </g>
-      <g transform="translate(540 0)" fill="#4c5e57">
-        <path d="M0 210 C0 148 44 108 100 108 C156 108 200 148 200 210Z"/>
-        <rect x="82" y="188" width="36" height="154"/>
-        <rect x="48" y="214" width="104" height="14" rx="2" fill="#73877d"/>
-        <rect x="18" y="338" width="164" height="12" fill="#73877d"/>
-        <path d="M100 108 V72" stroke="#b6935e" stroke-width="2"/>
-        <circle cx="100" cy="67" r="4" fill="#c7a56e"/>
-      </g>
-      <path d="M300 230 C360 206 430 206 500 230" fill="none" stroke="#c3a16b" stroke-width="1.3" stroke-dasharray="5 7" opacity=".6"/>
-      <g font-family="Georgia, serif" fill="#d1b07b" opacity=".75">
-        <text x="170" y="290" text-anchor="middle" font-size="11" letter-spacing="3">ROMA</text>
-        <text x="640" y="290" text-anchor="middle" font-size="11" letter-spacing="3">CONSTANTINOPOLIS</text>
-      </g>
-      <text x="54" y="68" font-family="Georgia, serif" font-size="12" fill="#bd9b68" opacity=".6" letter-spacing="4">DUAE CAPITALES</text>
-    `),
-    divided: wrap('#d8cab1', `
-      <g opacity=".18" stroke="#715c44" stroke-width="1">
-        ${[80, 160, 240, 320, 400, 480, 560, 640, 720].map((x) => `<path d="M${x} 0v450"/>`).join('')}
-        ${[90, 180, 270, 360].map((y) => `<path d="M0 ${y}h800"/>`).join('')}
-      </g>
-      <path d="M30 110 C150 62 290 58 388 108 L388 342 C290 390 150 386 30 338Z" fill="#b35f45" opacity=".78"/>
-      <path d="M412 108 C520 58 670 62 770 110 L770 338 C670 386 520 390 412 342Z" fill="#4f7771" opacity=".8"/>
-      <path d="M388 108 L412 108 L412 342 L388 342Z" fill="#e7d9c0"/>
-      <path d="M400 72 V382" stroke="#7f684d" stroke-width="2" stroke-dasharray="8 7"/>
-      <g font-family="Georgia, serif" fill="#f0e6d5">
-        <text x="190" y="214" text-anchor="middle" font-size="24" letter-spacing="6" opacity=".88">WEST</text>
-        <text x="610" y="214" text-anchor="middle" font-size="24" letter-spacing="6" opacity=".88">EAST</text>
-        <text x="190" y="242" text-anchor="middle" font-size="10" letter-spacing="3" opacity=".65">ROMA</text>
-        <text x="610" y="242" text-anchor="middle" font-size="10" letter-spacing="3" opacity=".65">CONSTANTINOPOLIS</text>
-      </g>
-      <g font-family="Georgia, serif" fill="#6f5942">
-        <text x="54" y="410" font-size="10" letter-spacing="3">DIVISIO IMPERII · 395</text>
-        <text x="716" y="410" text-anchor="end" font-size="10" letter-spacing="2" opacity=".6">POST HOC · NUNQUAM</text>
-      </g>
-    `),
-    timeline: wrap('#211d18', `
-      <path d="M70 226 H730" stroke="#c8a66d" stroke-width="1.4" opacity=".7"/>
-      <path d="M70 226 H430" stroke="#ce6e4b" stroke-width="2.2"/>
-      ${[
-        [120, '235', '军人皇帝开始'],
-        [255, '270', '边境危机'],
-        [390, '284', '戴克里先'],
-        [535, '305', '四帝共治'],
-        [700, '395', '正式分裂'],
-      ].map(([x, year, label]) => `
-        <g>
-          <circle cx="${x}" cy="226" r="${year === '395' ? 6 : 4}" fill="${year === '395' ? '#ce6e4b' : '#c8a66d'}"/>
-          <path d="M${x} 226 V${year === '395' ? 160 : 188}" stroke="#8e7655" stroke-width="1" opacity=".6"/>
-          <text x="${x}" y="${year === '395' ? 144 : 172}" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#d8ba85">${year}</text>
-          <text x="${x}" y="${year === '395' ? 304 : 318}" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#b3a28a" letter-spacing="1">${label}</text>
-        </g>
-      `).join('')}
-      <text x="54" y="70" font-family="Georgia, serif" font-size="12" fill="#c8a66d" opacity=".65" letter-spacing="4">CRISIS · REFORM · DIVISION</text>
-    `),
-    document: wrap('#2c251d', `
-      <g transform="translate(150 70) rotate(-4)">
-        <rect width="500" height="330" rx="3" fill="#ddcba9"/>
-        <rect x="22" y="22" width="456" height="286" fill="none" stroke="#a98758" stroke-width="1" opacity=".55"/>
-        <text x="44" y="64" font-family="Georgia, serif" font-size="12" fill="#765c3b" letter-spacing="4">IMPERIVM ROMANVM</text>
-        <g stroke="#9e8159" stroke-width="2" opacity=".6">
-          ${Array.from({ length: 9 }, (_, i) => `<path d="M44 ${106 + i * 22} H${i === 8 ? 340 : 440}"/>`).join('')}
-        </g>
-        <circle cx="405" cy="252" r="31" fill="#a94f3a" opacity=".8"/>
-        <circle cx="405" cy="252" r="23" fill="none" stroke="#d8b483" stroke-width="1" opacity=".6"/>
-        <text x="405" y="257" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#e7cfac">S · P · Q · R</text>
-      </g>
-      <text x="52" y="420" font-family="Georgia, serif" font-size="10" fill="#bda276" opacity=".55" letter-spacing="3">ARCHIVUM · MANUSCRIPTUM</text>
-    `),
-    soldiers: wrap('#241e18', `
-      <path d="M0 360 C120 340 230 352 340 340 C500 322 650 344 800 370 L800 450 L0 450Z" fill="#15110e"/>
-      <g fill="#0f0c0a">
-        ${[170, 280, 390, 500, 610].map((x, i) => `
-          <g transform="translate(${x} ${i % 2 ? 10 : 0})">
-            <circle cx="0" cy="250" r="15"/>
-            <path d="M-28 360 C-32 306 -17 274 0 274 C20 274 34 306 28 360Z"/>
-            <path d="M${-22} 360 L${-27} 420 M${22} 360 L${28} 420" stroke="#0f0c0a" stroke-width="7"/>
-            <path d="M${i % 2 ? 28 : -28} 280 L${i % 2 ? 70 : -70} 92" stroke="#6e553a" stroke-width="2.5"/>
-            <path d="M${i % 2 ? 70 : -70} 92 L${i % 2 ? 80 : -80} 78" stroke="#b9a17f" stroke-width="2"/>
-          </g>
-        `).join('')}
-      </g>
-      <path d="M660 56 L660 290" stroke="#8a6a45" stroke-width="3"/>
-      <path d="M660 70 C720 84 748 118 736 160 C708 144 682 140 660 148Z" fill="#8e3f31" opacity=".9"/>
-      <text x="54" y="70" font-family="Georgia, serif" font-size="12" fill="#c3a270" opacity=".6" letter-spacing="4">LIMES · EXERCITVS</text>
-    `),
-    crowd: wrap('#33251d', `
-      <ellipse cx="400" cy="180" rx="300" ry="120" fill="#e0b574" opacity=".08"/>
-      <g fill="#17110d">
-        ${[100, 180, 260, 340, 420, 500, 580, 660, 740].map((x, i) => `
-          <g transform="translate(${x} ${i % 3 * 12})">
-            <circle cx="0" cy="${250 + i % 4 * 6}" r="${18 + i % 3 * 3}"/>
-            <path d="M-34 390 C-38 326 -20 288 0 288 C24 288 40 326 34 390Z"/>
-          </g>
-        `).join('')}
-      </g>
-      <text x="54" y="70" font-family="Georgia, serif" font-size="12" fill="#c3a270" opacity=".55" letter-spacing="4">POPVLVS · ROMANVS</text>
-    `),
+  // 没有小标题的长文，按空行切成可处理的段落块。
+  if (result.length === 1 && result[0].text.length > 1400) {
+    const paragraphs = result[0].text.split(/\n{2,}/).filter(Boolean);
+    const chunks = [];
+    let buffer = [];
+    let size = 0;
+    for (const paragraph of paragraphs) {
+      buffer.push(paragraph);
+      size += paragraph.length;
+      if (size > 800) {
+        chunks.push(buffer.join('\n\n'));
+        buffer = [];
+        size = 0;
+      }
+    }
+    if (buffer.length) chunks.push(buffer.join('\n\n'));
+    result = chunks.map((chunk, index) => ({ title: `第 ${index + 1} 节`, text: chunk }));
+  }
+  return result;
+}
+
+function detectProofIssues(text) {
+  const issues = [];
+  const add = (type, safe, before, after, reason) => {
+    if (!before || issues.some((issue) => issue.before === before)) return;
+    issues.push({ id: `issue-${issues.length + 1}`, type, safe, before, after, reason, status: 'open' });
   };
 
-  return scenes[scene] || scenes.map;
+  const spaces = text.match(/[ \t]{2,}/);
+  if (spaces) add('空格', true, spaces[0], ' ', '中文句子中多了连续空格');
+
+  const punctuation = [['.', '。'], [',', '，'], ['?', '？'], ['!', '！'], [':', '：'], [';', '；']];
+  for (const [before, after] of punctuation) {
+    if (text.includes(before)) {
+      add('标点', true, before, after, `英文标点「${before}」应改成中文标点「${after}」`);
+      break;
+    }
+  }
+
+  const duplicate = text.match(/(你你|的的|了了|是是|在在)/);
+  if (duplicate) add('重复', true, duplicate[0], duplicate[0][0], '相邻汉字重复');
+
+  const repeated = text.match(/([，。！？；：])\1/);
+  if (repeated) add('标点', true, repeated[0], repeated[1], '连续重复的标点只保留一个');
+
+  return issues.slice(0, 8);
 }
 
-/* =========================================================
-   工具
-   ========================================================= */
-
-function formatClock(seconds) {
-  const value = Math.max(0, Math.floor(seconds));
-  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+function inferShotType(sentence) {
+  if (/地图|城市|铁路|港口|路线|地理|边界|河流|山脉/.test(sentence)) return '地图';
+  if (/照片|人物|少年|工人|农民|商人|官员|士兵|他|她/.test(sentence)) return '人物';
+  if (/档案|报纸|文件|记录|手稿|书信|资料|数据/.test(sentence)) return '档案';
+  if (/遗址|老屋|建筑|街道|车站|码头|厂房|城墙/.test(sentence)) return '遗址';
+  if (/图表|数字|增长|比例|统计|时间线|年代/.test(sentence)) return '图表';
+  return '情景再现';
 }
 
-function currentOption(shot) {
-  if (!shot) return null;
-  return shot.adopted ? shot.adoptedOption : shot.options[shot.optionIndex];
+function buildShotsForSection(text, sectionTitle) {
+  const sentences = String(text || '')
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[。！？!?])/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (!sentences.length) return [];
+
+  const groups = [];
+  let buffer = '';
+  for (const sentence of sentences) {
+    if (buffer && (buffer.length + sentence.length > 96)) {
+      groups.push(buffer);
+      buffer = sentence;
+    } else {
+      buffer += sentence;
+    }
+  }
+  if (buffer) groups.push(buffer);
+
+  return groups.map((sentence, index) => {
+    const clean = sentence.replace(/\s+/g, ' ').trim();
+    const duration = clamp(Math.round(clean.length / 4.6), 8, 24);
+    const type = inferShotType(clean);
+    return {
+      id: `shot-${index + 1}`,
+      no: index + 1,
+      duration,
+      type,
+      visual: `画面建议：${clean.slice(0, 46)}`,
+      material: '',
+      status: 'todo',
+    };
+  });
 }
 
-function activeShot() {
-  return shots.find((shot) => shot.id === activeId) || shots[0];
+function buildProjectsFromArticles() {
+  const articles = Array.isArray(window.SAMPLE_ARTICLES) && window.SAMPLE_ARTICLES.length
+    ? window.SAMPLE_ARTICLES
+    : [{
+      title: '一座港口城市的形成',
+      kind: '历史',
+      text: '这是一篇没有加载到示例文章时使用的占位文稿。\n\n请把真实文稿粘贴到新建项目页面，或在 samples.js 中准备示例数据。',
+    }];
+
+  return articles.map((article, projectIndex) => {
+    const sections = splitArticleSections(article.text).map((item, sectionIndex) => {
+      const shots = buildShotsForSection(item.text, item.title);
+      const duration = shots.reduce((sum, shot) => sum + shot.duration, 0);
+      const issues = detectProofIssues(item.text);
+      return {
+        index: sectionIndex,
+        code: `1.${sectionIndex + 1}`,
+        title: item.title,
+        status: 'pending',
+        duration,
+        shots,
+        proofStatus: issues.length ? 'review' : 'unprocessed',
+        proofIssues: issues,
+        proofText: item.text,
+        text: item.text,
+      };
+    });
+    const totalDuration = sections.reduce((sum, section) => sum + section.duration, 0);
+    const totalShots = sections.reduce((sum, section) => sum + section.shots.length, 0);
+    const chapter = {
+      id: `chapter-${projectIndex + 1}`,
+      no: '第一章',
+      title: '正文',
+      sections,
+    };
+    const episode = {
+      no: 1,
+      title: `第一章 ${article.title}`,
+      duration: formatTime(totalDuration),
+      sections: sections.length,
+      shots: totalShots,
+      progress: 0,
+      current: true,
+      chapter,
+    };
+    return {
+      id: `sample-${projectIndex + 1}`,
+      title: article.title,
+      subtitle: `${sections.length} 节 · ${formatTime(totalDuration)}`,
+      kind: article.kind || '示例',
+      episodes: [episode],
+    };
+  });
 }
 
-function startOf(index) {
-  let total = 0;
-  for (let i = 0; i < index; i += 1) total += currentOption(shots[i]).duration;
-  return total;
+let projects = buildProjectsFromArticles();
+try {
+  const saved = JSON.parse(localStorage.getItem('storyboard-demo-projects-v3') || 'null');
+  if (Array.isArray(saved) && saved.length) projects = saved;
+} catch {}
+
+
+const initialProject = projects[0];
+const initialEpisode = initialProject.episodes[0];
+const initialChapter = initialEpisode.chapter;
+const state = {
+  view: 'projects',
+  project: initialProject,
+  episode: initialEpisode,
+  chapter: initialChapter,
+  sectionIndex: 0,
+  shotIndex: 0,
+  mode: 'proof',
+  proofView: 'compare',
+  filter: 'all',
+  expanded: new Set([0]),
+  currentTime: 0,
+  playing: false,
+  playTimer: null,
+  exportTarget: 0,
+  playerSize: '16:9|1920×1080|1080p 横屏',
+};
+
+let toastTimer = null;
+
+function totalShots() {
+  return state.chapter.sections.reduce((sum, section) => sum + section.shots.length, 0);
 }
 
-function totalDuration() {
-  return shots.reduce((total, shot) => total + currentOption(shot).duration, 0);
+function doneShots() {
+  return state.chapter.sections.reduce((sum, section) => sum + section.shots.filter((shot) => shot.status === 'done').length, 0);
 }
 
-function shotIndex() {
-  return Math.max(0, shots.findIndex((shot) => shot.id === activeId));
+function doneSections() {
+  return state.chapter.sections.filter((section) => section.status === 'done').length;
 }
 
-function toast(message) {
-  const el = $('#toast');
-  el.textContent = message;
-  el.classList.add('is-visible');
+function proofDoneSections() {
+  return state.chapter.sections.filter((section) => section.proofStatus === 'final').length;
+}
+
+function currentSection() {
+  return state.chapter.sections[state.sectionIndex];
+}
+
+function currentShot() {
+  return currentSection().shots[Math.min(state.shotIndex, currentSection().shots.length - 1)];
+}
+
+function sectionDuration(section) {
+  return section.shots.reduce((sum, shot) => sum + shot.duration, 0);
+}
+
+function showToast(message) {
+  const toast = $('#toast');
+  toast.textContent = message;
+  toast.classList.add('is-visible');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('is-visible'), 2200);
+  toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2600);
 }
 
-function updateProjectTitle() {
-  $('#projectTitle').textContent = project.title;
-  document.title = `${project.title} · 分镜台`;
+function fallbackCopy(text, successMessage) {
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.appendChild(area);
+  area.select();
+  try { document.execCommand('copy'); showToast(successMessage); } catch { showToast('请手动选择复制'); }
+  area.remove();
 }
 
-/* =========================================================
-   渲染
-   ========================================================= */
+function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => showToast('整节文案已复制，可以粘贴进声音克隆'),
+      () => fallbackCopy(text, '整节文案已复制，可以粘贴进声音克隆')
+    );
+    return;
+  }
+  fallbackCopy(text, '整节文案已复制');
+}
 
-function renderScript() {
-  const list = $('#scriptList');
-  list.innerHTML = shots.map((shot, index) => {
-    const opt = currentOption(shot);
-    const start = startOf(index);
-    return `
-      <article class="script-line ${shot.id === activeId ? 'is-active' : ''}" data-shot="${shot.id}" tabindex="0">
-        <div class="line-num">${String(index + 1).padStart(2, '0')}</div>
-        <div class="line-body">
-          <div class="line-text">${escapeHtml(shot.line)}</div>
-          <div class="line-meta">
-            <span class="line-type">${escapeHtml(shot.lineType)}</span>
-            <span>${formatClock(start)} · ${opt.duration}s</span>
-            <span class="line-status ${shot.adopted ? 'is-adopted' : ''}">
-              <i></i>${shot.adopted ? '已采用' : '待确认'}
-            </span>
-          </div>
-        </div>
-      </article>
-    `;
+function sceneSvg(type) {
+  const wrap = (bg, inner) => `<svg viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="800" height="450" fill="${bg}"/>${inner}</svg>`;
+  if (type === '人物') {
+    return wrap('#211b16', `
+      <rect x="205" y="58" width="390" height="334" fill="#2c241c" stroke="#6e5942" stroke-width="1.5"/>
+      <ellipse cx="400" cy="228" rx="103" ry="118" fill="#b8845d" opacity=".75"/>
+      <path d="M302 361 C318 298 356 278 400 278 C444 278 482 298 498 361Z" fill="#16120e"/>
+      <path d="M356 192 C372 163 428 163 444 192" fill="none" stroke="#5f442e" stroke-width="7" opacity=".7"/>
+      <circle cx="367" cy="224" r="5" fill="#2b1e14"/><circle cx="433" cy="224" r="5" fill="#2b1e14"/>
+      <path d="M380 266 Q400 278 420 266" fill="none" stroke="#5f392b" stroke-width="3" opacity=".7"/>
+      <text x="50" y="416" font-family="Georgia,serif" font-size="10" fill="#bca283" letter-spacing="3">PORTRAIT · ARCHIVE</text>
+    `);
+  }
+  if (type === '档案') {
+    return wrap('#1d1915', `
+      <g transform="translate(170 58) rotate(-3)">
+        <rect width="470" height="330" fill="#ddcbaa"/>
+        <rect x="22" y="22" width="426" height="286" fill="none" stroke="#b49a72" opacity=".6"/>
+        <text x="44" y="62" font-family="Georgia,serif" font-size="12" fill="#765b3c" letter-spacing="4">DOCUMENT · 1978</text>
+        ${Array.from({length: 9}, (_, i) => `<path d="M44 ${102 + i * 22} H${i === 8 ? 340 : 414}" stroke="#a98d67" stroke-width="2" opacity=".55"/>`).join('')}
+        <circle cx="395" cy="260" r="30" fill="#a94f3a" opacity=".72"/>
+        <circle cx="395" cy="260" r="22" fill="none" stroke="#e5cda9" opacity=".6"/>
+        <text x="395" y="265" text-anchor="middle" font-family="Georgia,serif" font-size="8" fill="#f0dfc5">档案</text>
+      </g>
+      <text x="50" y="416" font-family="Georgia,serif" font-size="10" fill="#bda276" opacity=".7" letter-spacing="3">PAPER · MEMORY</text>
+    `);
+  }
+  if (type === '遗址') {
+    return wrap('#17130f', `
+      <path d="M0 348 C130 330 270 342 400 332 C560 318 690 342 800 368 L800 450 L0 450Z" fill="#100d0a"/>
+      <g fill="#5a4633"><rect x="130" y="126" width="27" height="210"/><rect x="176" y="126" width="27" height="210"/><rect x="222" y="126" width="27" height="210"/><rect x="268" y="126" width="27" height="210"/><rect x="116" y="112" width="190" height="15" fill="#71563e"/><rect x="126" y="332" width="170" height="12" fill="#71563e"/></g>
+      <path d="M420 300 C450 240 530 222 600 252 C650 274 676 318 682 352 L420 352Z" fill="#2b241b"/>
+      <path d="M70 320 C180 290 300 300 400 330" stroke="#8a6a4d" stroke-width="2" fill="none" opacity=".5"/>
+      <text x="50" y="416" font-family="Georgia,serif" font-size="10" fill="#bda276" opacity=".65" letter-spacing="3">SITE · RUINS</text>
+    `);
+  }
+  if (type === '图表') {
+    return wrap('#e3d6bf', `
+      <g opacity=".16" stroke="#6f5a43">${[100,180,260,340,420,500,580,660,740].map((x) => `<path d="M${x} 0v450"/>`).join('')}${[80,150,220,290,360,430].map((y) => `<path d="M0 ${y}h800"/>`).join('')}</g>
+      <g fill="#b05d40"><rect x="160" y="255" width="66" height="130"/><rect x="255" y="208" width="66" height="177"/><rect x="350" y="163" width="66" height="222"/><rect x="445" y="116" width="66" height="269"/><rect x="540" y="70" width="66" height="315"/></g>
+      <path d="M160 242 L270 190 L380 146 L500 94 L620 54" stroke="#4e7768" stroke-width="4" fill="none"/>
+      <text x="52" y="62" font-family="Georgia,serif" font-size="12" fill="#66513d" letter-spacing="4">DATA · STRUCTURE</text>
+    `);
+  }
+  if (type === '情景再现') {
+    return wrap('#241d16', `
+      <path d="M0 330 C120 300 220 328 320 308 C450 282 580 320 800 286 L800 450 L0 450Z" fill="#17120d"/>
+      <path d="M88 340 C180 250 300 210 420 230 C520 246 600 292 690 340" fill="none" stroke="#5e4b37" stroke-width="3" opacity=".6"/>
+      <g fill="#0f0c09"><circle cx="250" cy="275" r="16"/><path d="M220 360 C220 310 232 292 250 292 C272 292 286 310 280 360Z"/><circle cx="515" cy="290" r="13"/><path d="M490 360 C490 320 500 304 515 304 C532 304 542 320 538 360Z"/></g>
+      <path d="M0 70 L800 70" stroke="#d3a774" stroke-width="1" opacity=".18"/>
+      <text x="50" y="416" font-family="Georgia,serif" font-size="10" fill="#bda276" opacity=".65" letter-spacing="3">RECONSTRUCTION</text>
+    `);
+  }
+  return wrap('#191612', `
+    <g opacity=".2" stroke="#9b8062">${[100,180,260,340,420,500,580,660,740].map((x) => `<path d="M${x} 0v450"/>`).join('')}${[80,150,220,290,360,430].map((y) => `<path d="M0 ${y}h800"/>`).join('')}</g>
+    <path d="M60 320 C130 250 260 220 360 260 C480 308 560 282 720 220 L760 420 L40 420Z" fill="#8e5b43" opacity=".8"/>
+    <path d="M60 320 C190 282 330 314 450 356 C560 394 680 368 760 334" fill="none" stroke="#d1a070" stroke-width="2" opacity=".5"/>
+    <text x="50" y="80" font-family="Georgia,serif" font-size="12" fill="#d2b18a" opacity=".65" letter-spacing="4">MAP · TERRITORY</text>
+    <text x="500" y="300" font-family="Georgia,serif" font-size="18" fill="#f1dfc7" opacity=".75">1958</text>
+  `);
+}
+
+/* ---------------- project library ---------------- */
+function renderProjectPage() {
+  const current = projects.find((project) => project.id === state.project?.id) || projects[0] || null;
+  const currentPlayable = Boolean(current?.episodes[0]?.chapter);
+  const currentDone = currentPlayable ? proofDoneSections() : 0;
+  const currentTotal = currentPlayable ? state.chapter.sections.length : 0;
+  const currentShots = currentPlayable ? doneShots() : 0;
+  const currentShotsTotal = currentPlayable ? totalShots() : 0;
+
+  $('#projectStats').innerHTML = `
+    <div class="stat-card"><small>项目</small><strong>${projects.length} 个</strong><em>本地项目库</em></div>
+    <div class="stat-card"><small>当前项目</small><strong>${current?.title || '未选择'}</strong><em>${current?.subtitle || '点项目进入'}</em></div>
+    <div class="stat-card"><small>当前文稿进度</small><strong>${currentDone}/${currentTotal || 0} 节</strong><em>${currentShots}/${currentShotsTotal || 0} 镜已配</em></div>
+    <div class="stat-card"><small>项目状态</small><strong>进行中</strong><em>一条视频 = 一个项目</em></div>
+  `;
+
+  $('#projectCount').textContent = `${projects.length} 个项目`;
+  if (!projects.length) {
+    $('#projectList').innerHTML = '<div class="projects-empty">还没有项目。点右上角「＋ 新建项目」开始。</div>';
+    return;
+  }
+
+  $('#projectList').innerHTML = projects.map((project, index) => {
+    const isCurrent = project.id === current?.id;
+    const isPlayable = Boolean(project.episodes[0]?.chapter);
+    const isActive = project.id === state.project?.id;
+    const done = isPlayable && isActive ? proofDoneSections() : 0;
+    const total = isPlayable ? project.episodes[0].chapter.sections.length : project.episodes.reduce((sum, episode) => sum + episode.sections, 0);
+    const percent = total ? Math.round((done / total) * 100) : 0;
+    return `<article class="project-card ${isCurrent ? 'is-current' : ''}">
+      <button class="project-open" data-project="${project.id}">
+        <span class="project-index">${pad(index + 1)}</span>
+        <span class="project-copy">
+          <span class="project-kicker">${project.kind}</span>
+          <strong class="project-title">${project.title}</strong>
+          <span class="project-subtitle">${project.episodes.length ? `${project.episodes.length} 集` : '还没有分集'}</span>
+          <span class="project-card-foot"><span class="progress-bar"><i style="width:${percent}%"></i></span><span>${isPlayable ? `${done}/${total} 节` : '未开始'}</span><span class="project-enter">进入项目 →</span></span>
+        </span>
+      </button>
+      <button class="project-delete" data-delete="${project.id}" title="删除项目" aria-label="删除项目">×</button>
+    </article>`;
   }).join('');
 
-  $$('.script-line', list).forEach((node) => {
-    node.addEventListener('click', () => selectShot(node.dataset.shot));
-    node.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        selectShot(node.dataset.shot);
+  $$('.project-open').forEach((button) => {
+    button.addEventListener('click', () => {
+      const project = projects.find((item) => item.id === button.dataset.project);
+      if (project) openProject(project);
+    });
+  });
+
+  $$('.project-delete').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const project = projects.find((item) => item.id === button.dataset.delete);
+      if (!project) return;
+      if (!window.confirm(`删除项目「${project.title}」？本地演示会立即移除。`)) return;
+      const index = projects.findIndex((item) => item.id === project.id);
+      if (index >= 0) projects.splice(index, 1);
+      if (state.project?.id === project.id) state.project = projects[0] || null;
+      renderProjectPage();
+      showToast(`已删除项目「${project.title}」`);
+      saveProjects();
+    });
+  });
+}
+
+function openProject(project) {
+  state.project = project;
+  state.episode = project.episodes[0] || null;
+  state.chapter = state.episode?.chapter || null;
+  state.sectionIndex = 0;
+  state.shotIndex = 0;
+  state.view = 'series';
+  stopPlayback();
+  $('#projectsView').hidden = true;
+  $('#newProjectView').hidden = true;
+  $('#seriesView').hidden = false;
+  $('#workspaceView').hidden = true;
+  $('#topCrumb').textContent = `项目库 / ${project.title}`;
+  $('#seriesTitle').textContent = project.title;
+  $('#seriesSubtitle').textContent = project.subtitle;
+  renderSeries();
+}
+
+function backToProjects() {
+  stopPlayback();
+  state.view = 'projects';
+  $('#workspaceView').hidden = true;
+  $('#seriesView').hidden = true;
+  $('#newProjectView').hidden = true;
+  $('#projectsView').hidden = false;
+  $('#topCrumb').textContent = '项目库';
+  renderProjectPage();
+}
+
+function openNewProject() {
+  stopPlayback();
+  state.view = 'new';
+  $('#projectsView').hidden = true;
+  $('#seriesView').hidden = true;
+  $('#workspaceView').hidden = true;
+  $('#newProjectView').hidden = false;
+  $('#topCrumb').textContent = '项目库 / 新建项目';
+  $('#newProjectName').value = '未命名项目';
+  $('#newProjectScript').value = '';
+  updateNewProjectCount();
+}
+
+function updateNewProjectCount() {
+  const value = $('#newProjectScript').value.trim();
+  $('#newProjectCharCount').textContent = `${value.replace(/\s/g, '').length} 字`;
+}
+
+function saveProjects() {
+  try { localStorage.setItem('storyboard-demo-projects-v3', JSON.stringify(projects)); } catch {}
+}
+
+function downloadProjectCsv() {
+  const project = state.project;
+  if (!project) return;
+  const rows = [['项目', '小节编号', '小节', '镜头号', '时长(秒)', '画面建议', '类型', '素材', '状态', '整节文案']];
+  for (const section of state.chapter.sections) {
+    if (!section.shots.length) {
+      rows.push([project.title, section.code, section.title, '', '', '', '', '', section.proofStatus, section.text]);
+    }
+    for (const shot of section.shots) {
+      rows.push([project.title, section.code, section.title, shot.no, shot.duration, shot.visual, shot.type, shot.material || '', shot.status, shot.no === 1 ? section.text : '']);
+    }
+  }
+  const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+  const csv = '\uFEFF' + rows.map((row) => row.map(escape).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${project.title.replace(/[\\/:*?"<>|]/g, '_')}_分镜.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('CSV 已下载，可以用 Excel 打开');
+}
+
+function detectDraftIssues(text) {
+  const issues = [];
+  const spaces = text.match(/[ \t]{2,}/);
+  if (spaces) {
+    issues.push({ id: 'space', type: '空格', safe: true, before: spaces[0], after: ' ', reason: '中文句子中多了连续空格', status: 'open' });
+  }
+  const duplicate = text.match(/([\u4e00-\u9fa5])\1/);
+  if (duplicate) {
+    issues.push({ id: 'dup', type: '重复', safe: true, before: duplicate[0], after: duplicate[1], reason: '相邻汉字重复', status: 'open' });
+  }
+  if (text.includes('.')) {
+    issues.push({ id: 'period', type: '标点', safe: true, before: '.', after: '。', reason: '英文句号应改成中文句号', status: 'open' });
+  }
+  return issues.slice(0, 3);
+}
+
+function buildDraftChapter(manuscript) {
+  const issues = detectProofIssues(manuscript);
+  const shots = buildShotsForSection(manuscript, '原始文稿');
+  const section = {
+    index: 0,
+    code: '1.1',
+    title: '原始文稿',
+    status: 'pending',
+    duration: shots.reduce((sum, shot) => sum + shot.duration, 0),
+    shots,
+    proofStatus: issues.length ? 'review' : 'unprocessed',
+    proofIssues: issues,
+    proofText: manuscript,
+    text: manuscript,
+  };
+  return {
+    id: `draft-${Date.now()}`,
+    no: '第一章',
+    title: '未命名章节',
+    sections: [section],
+  };
+}
+
+function createProjectFromForm() {
+  const name = $('#newProjectName').value.trim();
+  const manuscript = $('#newProjectScript').value.trim();
+  if (!name) { showToast('先给项目起一个名字'); $('#newProjectName').focus(); return; }
+  if (!manuscript) { showToast('先把原始文稿贴进来'); $('#newProjectScript').focus(); return; }
+  const draftChapter = buildDraftChapter(manuscript);
+  const episode = {
+    no: 1,
+    title: '第一章 未命名章节',
+    duration: formatTime(draftChapter.sections[0].duration),
+    sections: 1,
+    shots: draftChapter.sections[0].shots.length,
+    progress: 0,
+    current: true,
+    chapter: draftChapter,
+  };
+  const project = {
+    id: `project-${Date.now()}`,
+    title: name,
+    subtitle: '1 集 · 新项目',
+    kind: '新项目',
+    episodes: [episode],
+  };
+  projects.push(project);
+  state.project = project;
+  state.episode = episode;
+  state.chapter = draftChapter;
+  state.sectionIndex = 0;
+  state.shotIndex = 0;
+  state.mode = 'proof';
+  $('#newProjectView').hidden = true;
+  $('#projectsView').hidden = true;
+  $('#seriesView').hidden = true;
+  $('#workspaceView').hidden = false;
+  $('#topCrumb').textContent = `项目库 / ${project.title} / 第1集 / 第一章`;
+  renderWorkspace();
+  showToast('项目已创建：先处理原始文稿，再设计镜头表');
+  saveProjects();
+}
+
+function renameCurrentProject() {
+  if (!state.project) return;
+  const name = window.prompt('修改项目名称', state.project.title);
+  if (!name || !name.trim()) return;
+  state.project.title = name.trim();
+  $('#seriesTitle').textContent = state.project.title;
+  $('#topCrumb').textContent = `项目库 / ${state.project.title}`;
+  renderSeries();
+  showToast('项目名称已更新');
+  saveProjects();
+}
+
+/* ---------------- series home ---------------- */
+function renderSeries() {
+  const project = state.project;
+  if (!project) { backToProjects(); return; }
+  const projectEpisodes = project.episodes;
+  const playable = Boolean(projectEpisodes[0]?.chapter);
+  const done = playable ? proofDoneSections() : 0;
+  const materialDone = playable ? doneSections() : 0;
+  const total = playable ? state.chapter.sections.length : 0;
+  const shotsDone = playable ? doneShots() : 0;
+  const shotsTotal = playable ? totalShots() : 0;
+  const next = playable ? currentSection() : projectEpisodes[0];
+
+  $('#seriesTitle').textContent = project.title;
+  $('#seriesSubtitle').textContent = project.subtitle;
+  $('#episodeCount').textContent = `${projectEpisodes.length} 集`;
+  const continueBtn = $('#continueBtn');
+  continueBtn.disabled = !playable;
+  continueBtn.textContent = playable ? '继续第 1 集' : '暂无镜头';
+
+  $('#seriesStats').innerHTML = `
+    <div class="stat-card"><small>本系列</small><strong>${projectEpisodes.length} 集</strong><em>${project.kind} · 本地演示</em></div>
+    <div class="stat-card"><small>当前集</small><strong>${projectEpisodes[0]?.title || '未添加'}</strong><em>${projectEpisodes[0] ? `${projectEpisodes[0].duration} · ${playable ? total : projectEpisodes[0].sections} 节` : '还没有分集'}</em></div>
+    <div class="stat-card"><small>本集进度</small><strong>${playable ? `${done}/${total} 节` : '0 节'}</strong><em>${playable ? `已配 ${materialDone}/${total} 节` : '点进项目后展开'}</em></div>
+    <div class="stat-card"><small>已配画面</small><strong>${playable ? `${shotsDone}/${shotsTotal} 镜` : '0 镜'}</strong><em>${playable ? '先完成一小节' : '演示项目'}</em></div>
+  `;
+
+  $('#episodeList').innerHTML = projectEpisodes.length ? projectEpisodes.map((episode) => {
+    const isCurrent = playable && episode.no === 1;
+    const progress = isCurrent ? done : 0;
+    const percent = isCurrent && total ? Math.round((done / total) * 100) : 0;
+    const sectionsLabel = isCurrent ? total : episode.sections;
+    const shotsLabel = isCurrent ? shotsTotal : episode.shots;
+    return `<button class="episode-card ${isCurrent ? 'is-current' : ''}" data-episode="${episode.no}">
+      <span class="episode-no">${pad(episode.no)}</span>
+      <span class="episode-body">
+        <span class="episode-topline"><strong class="episode-title">${episode.title}</strong><span class="episode-status ${isCurrent ? 'active' : ''}">${isCurrent ? '进行中' : '未开始'}</span></span>
+        <span class="episode-meta">${episode.duration} · ${sectionsLabel} 节 · ${shotsLabel} 镜</span>
+        <span class="episode-progress"><span class="progress-bar"><i style="width:${percent}%"></i></span><span>${isCurrent ? `${progress}/${total} 节` : '0 节'}</span></span>
+      </span>
+    </button>`;
+  }).join('') : '<div class="projects-empty">这个项目还没有分集。下一步可以在这里添加第 1 集。</div>';
+
+  $$('.episode-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      if (playable && Number(card.dataset.episode) === 1) {
+        openWorkspace();
+      } else {
+        showToast('本地演示只展开了当前示例项目的第 1 集；其他集用于展示系列结构');
       }
     });
   });
-  $('#scriptStats').textContent = `${shots.length} 句 · 约 ${shots.reduce((sum, shot) => sum + shot.line.length, 0)} 字`;
-}
 
-function renderPreview() {
-  const shot = activeShot();
-  const opt = currentOption(shot);
-  const index = shotIndex();
-  $('#preview').innerHTML = `
-    ${sceneSvg(opt.scene)}
-    <div class="preview-top">
-      <span class="pill">SCENE ${String(index + 1).padStart(2, '0')} · ${escapeHtml(opt.type)}</span>
-      <span class="pill">${shot.adopted ? '已采用' : 'AI 建议'}</span>
-    </div>
-    <div class="preview-bottom">
-      <div>
-        <div class="preview-title">${escapeHtml(opt.title)}</div>
-        <div class="preview-sub">${escapeHtml(opt.desc)}</div>
-      </div>
-      <div class="preview-duration">${opt.duration}s</div>
-    </div>
-  `;
-
-  $('#shotIndex').innerHTML = `镜头 ${String(index + 1).padStart(2, '0')} <span>${escapeHtml(shot.lineType)}</span>`;
-  $('#captionTitle').textContent = opt.title;
-  $('#captionDesc').textContent = opt.desc;
-  $('#captionDuration').textContent = `${opt.duration}s`;
-  $('#captionTransition').textContent = opt.transition;
-}
-
-function renderSuggestions() {
-  const shot = activeShot();
-  const selected = currentOption(shot);
-  const index = shotIndex();
-
-  $('#sentenceContext').innerHTML = `<strong>第 ${index + 1} 句</strong> · ${escapeHtml(shot.line)}`;
-  $('#suggestionList').innerHTML = shot.options.map((opt, optionIndex) => `
-    <button class="suggestion ${selected === opt ? 'is-selected' : ''}" data-option="${optionIndex}" type="button">
-      <span class="suggestion-thumb">${sceneSvg(opt.scene)}</span>
-      <span class="suggestion-copy">
-        <span class="suggestion-kicker">方案 ${String(optionIndex + 1).padStart(2, '0')} · ${escapeHtml(opt.type)}</span>
-        <span class="suggestion-title">${escapeHtml(opt.title)}</span>
-        <span class="suggestion-desc">${escapeHtml(opt.desc)}</span>
-      </span>
-      <span class="suggestion-check">✓</span>
-    </button>
-  `).join('');
-
-  $$('.suggestion', $('#suggestionList')).forEach((node) => {
-    node.addEventListener('click', () => {
-      shot.optionIndex = Number(node.dataset.option);
-      shot.adopted = false;
-      shot.adoptedOption = null;
-      renderAll();
-      toast('已切换画面方案，点击「采用这个镜头」确认');
-    });
-  });
-
-  $('#whyText').textContent = selected.reason;
-  $('#keywordRow').innerHTML = selected.keywords.map((keyword) => `<span class="keyword">${escapeHtml(keyword)}</span>`).join('');
-  $('#sourceText').textContent = selected.source;
-  $('#licenseText').textContent = selected.license;
-  $('#shotNote').value = shot.note || '';
-
-  const candidates = materials.filter((material) => material.scene === selected.scene).slice(0, 2);
-  const fallback = candidates.length ? candidates : materials.slice(0, 2);
-  $('#candidateList').innerHTML = fallback.map((material) => `
-    <button class="candidate" type="button" data-candidate="${escapeHtml(material.name)}">
-      <span class="candidate-thumb">${sceneSvg(material.scene)}</span>
-      <span class="candidate-copy">
-        <span class="candidate-name">${escapeHtml(material.name)}</span>
-        <span class="candidate-tags">${escapeHtml(material.tags)}</span>
-      </span>
-    </button>
-  `).join('');
-
-  $$('.candidate', $('#candidateList')).forEach((node) => {
-    node.addEventListener('click', () => {
-      shot.material = node.dataset.candidate;
-      toast(`已关联素材：${node.dataset.candidate}`);
-    });
-  });
-
-  const adoptBtn = $('#adoptBtn');
-  const already = shot.adopted && shot.adoptedOption === selected;
-  adoptBtn.textContent = already ? '已采用' : '采用这个镜头';
-  adoptBtn.disabled = already;
-  adoptBtn.classList.toggle('is-done', already);
-}
-
-function renderStageNotes() {
-  const shot = activeShot();
-  const index = shotIndex();
-  const next = shots[index + 1];
-  const note = $('#transitionNote');
-  const button = $('#nextShotButton');
-  if (next) {
-    note.textContent = `下一镜头「${currentOption(next).title}」· 建议用${currentOption(next).transition}承接。`;
-    button.textContent = '下一镜头 →';
-    button.disabled = false;
+  if (playable) {
+    $('#seriesSide').innerHTML = `
+      <section class="side-card">
+        <div class="mini-label">NEXT WORK</div>
+        <h3>继续第 1 集</h3>
+        <p>先完成「${next.code} ${next.title}」，再进入下一节。不要从全片开始做。</p>
+        <div class="side-progress">
+          <div class="progress-bar"><i style="width:${Math.round((done / total) * 100)}%"></i></div>
+          <div class="side-progress-label"><span>${done}/${total} 节定稿</span><span>${shotsDone}/${shotsTotal} 镜已配</span></div>
+        </div>
+        <div class="side-next"><strong>下一节：</strong>${next.code} ${next.title}<br><span>${next.shots.length} 镜 · 约 ${formatTime(sectionDuration(next))}</span></div>
+        <div class="side-actions">
+          <button class="btn btn-soft" id="sideSeriesHelp">看流程</button>
+          <button class="btn btn-primary" id="sideContinue">继续本节 →</button>
+        </div>
+      </section>
+      <section class="side-card">
+        <div class="mini-label">WORKBOOK</div>
+        <h3>一集一个工作簿</h3>
+        <p><strong>第1集_第一章_分镜.xlsx</strong><br>00 总览 + 本集章节 sheet；每节保留整节文案，方便声音克隆。</p>
+        <div class="side-actions"><button class="btn btn-ghost" id="sideWorkbook">导出工作簿</button></div>
+      </section>`;
+    $('#sideContinue').addEventListener('click', openWorkspace);
+    $('#sideSeriesHelp').addEventListener('click', () => showToast('系列 → 集 → 章 → 节 → 镜头；先完成一小节'));
+    $('#sideWorkbook').addEventListener('click', () => showToast('本地演示：会导出 00 总览 + 章节 sheet（尚未写入文件）'));
   } else {
-    note.textContent = '这是最后一个镜头，建议定格 1–2 秒再收尾，给观众留一点余味。';
-    button.textContent = '已是最后一镜';
-    button.disabled = true;
+    $('#seriesSide').innerHTML = `
+      <section class="side-card">
+        <div class="mini-label">PROJECT SHELL</div>
+        <h3>项目结构</h3>
+        <p>这个项目目前只有分集结构，还没有展开章节和镜头。点「返回项目库」可以继续新建项目。</p>
+        <div class="side-progress">
+          <div class="progress-bar"><i style="width:0%"></i></div>
+          <div class="side-progress-label"><span>0/${projectEpisodes.length} 集完成</span><span>${projectEpisodes.length} 集结构</span></div>
+        </div>
+        <div class="side-actions"><button class="btn btn-primary" id="sideBackProjects">返回项目库</button></div>
+      </section>`;
+    $('#sideBackProjects').addEventListener('click', backToProjects);
   }
 }
 
-function renderTimeline() {
-  const timeline = $('#timeline');
-  timeline.innerHTML = shots.map((shot, index) => {
-    const opt = currentOption(shot);
-    const start = startOf(index);
-    return `
-      <button class="shot-block ${shot.id === activeId ? 'is-active' : ''} ${shot.adopted ? '' : 'is-pending'}" data-shot="${shot.id}" type="button" style="width:${Math.max(98, opt.duration * 11)}px">
-        <span class="shot-thumb">${sceneSvg(opt.scene)}</span>
-        <span class="shot-name">${String(index + 1).padStart(2, '0')} · ${escapeHtml(opt.title)}</span>
-        <span class="shot-time">${formatClock(start)} / ${opt.duration}s</span>
-        ${shot.adopted ? '<span class="shot-check">✓</span>' : ''}
+/* ---------------- workspace ---------------- */
+function openWorkspace() {
+  if (!state.chapter || !state.chapter.sections.length) {
+    showToast('这个项目还没有展开章节和镜头');
+    return;
+  }
+  state.episode = state.project?.episodes[0] || state.episode;
+  state.view = 'workspace';
+  state.currentTime = 0;
+  stopPlayback();
+  $('#projectsView').hidden = true;
+  $('#newProjectView').hidden = true;
+  $('#seriesView').hidden = true;
+  $('#workspaceView').hidden = false;
+  $('#topCrumb').textContent = `项目库 / ${state.project.title} / 第1集 / ${state.chapter.no}`;
+  renderWorkspace();
+}
+
+function backToSeries() {
+  stopPlayback();
+  state.view = 'series';
+  $('#workspaceView').hidden = true;
+  $('#projectsView').hidden = true;
+  $('#seriesView').hidden = false;
+  $('#topCrumb').textContent = `项目库 / ${state.project.title}`;
+  renderSeries();
+}
+
+function renderWorkspace() {
+  const section = currentSection();
+  const total = state.chapter.sections.length;
+  const done = doneSections();
+  const shotsDone = doneShots();
+  const shotsTotal = totalShots();
+  const proofDone = state.chapter.sections.filter((item) => item.proofStatus === 'final').length;
+  const proofOpen = state.chapter.sections.reduce((sum, item) => sum + item.proofIssues.filter((issue) => issue.status === 'open').length, 0);
+
+  $('#workspaceKicker').textContent = `第 ${state.episode?.no || 1} 集 · 项目`;
+  $('#workspaceName').textContent = `${state.chapter.no} ${state.chapter.title}`;
+  $('#workspaceProgressLabel').textContent = state.mode === 'proof' ? `${proofDone}/${total} 节已定稿` : `${done}/${total} 节`;
+  $('#workspaceShotsLabel').textContent = state.mode === 'proof' ? `${proofOpen} 处待处理` : `${shotsDone}/${shotsTotal} 镜`;
+  $('#workspaceProgressBar').style.width = state.mode === 'proof' ? `${(proofDone / total) * 100}%` : `${(shotsDone / shotsTotal) * 100}%`;
+  $('#statusEpisode').textContent = `${state.episode?.title || ''}`;
+  $('#statusSection').textContent = `${section.code} ${section.title}`;
+  $('#statusProgress').textContent = state.mode === 'proof' ? `${proofDone}/${total} 节定稿 · ${proofOpen} 处待处理` : `${done}/${total} 节 · ${shotsDone}/${shotsTotal} 镜`;
+  $('#sheetChapter').textContent = `01 ${state.chapter.no} ${state.chapter.title}`;
+  const missing = shotsTotal - shotsDone;
+  const missingEl = $('#exportMissing');
+  if (missingEl) missingEl.textContent = missing ? `还有 ${missing} 个镜头未绑定素材` : '全部镜头都已绑定素材';
+  const missingRow = $('#exportMissingRow');
+  if (missingRow) missingRow.hidden = missing === 0;
+  const exportSummary = $('#exportCheckSummary');
+  if (exportSummary) exportSummary.textContent = missing ? '3 项通过 · 1 项提醒' : '4 项通过';
+
+  renderTree();
+  renderMode();
+  renderRight();
+}
+
+function renderTree() {
+  const section = currentSection();
+  const isProof = state.mode === 'proof';
+  const done = isProof
+    ? state.chapter.sections.filter((item) => item.proofStatus === 'final').length
+    : doneSections();
+  const total = state.chapter.sections.length;
+  $('#treeMeta').textContent = isProof ? `${done}/${total} 已定稿` : `${done}/${total} 已完成`;
+  const filterButtons = $$('#treeFilter .filter-chip');
+  if (filterButtons[0]) filterButtons[0].textContent = '全部';
+  if (filterButtons[1]) filterButtons[1].textContent = isProof ? '待处理' : '待配';
+  if (filterButtons[2]) filterButtons[2].textContent = isProof ? '已定稿' : '已完成';
+
+  const visibleSections = state.chapter.sections.filter((item) => {
+    if (state.filter === 'done') return isProof ? item.proofStatus === 'final' : item.status === 'done';
+    if (state.filter === 'todo') return isProof ? item.proofStatus !== 'final' : item.status !== 'done';
+    return true;
+  });
+
+  const rows = visibleSections.map((item) => {
+    const isActive = item.index === state.sectionIndex;
+    const isDone = isProof ? item.proofStatus === 'final' : item.status === 'done';
+    const isExpanded = !isProof && state.expanded.has(item.index);
+    const statusClass = isDone ? 'is-done' : isActive ? 'is-active' : '';
+    const proofLabel = item.proofStatus === 'final' ? '已定稿' : item.proofStatus === 'review' ? '待确认' : '未处理';
+    const meta = isProof
+      ? `${item.shots.length} 镜 · ${formatTime(sectionDuration(item))} · ${proofLabel}`
+      : `${item.shots.length} 镜 · ${formatTime(sectionDuration(item))} · ${item.status === 'done' ? '已完成' : isActive ? '进行中' : '未开始'}`;
+    const shots = isExpanded ? `<div class="tree-shots">${item.shots.map((shot) => {
+      const activeShot = isActive && shot.no === state.shotIndex + 1;
+      return `<button class="tree-shot ${activeShot ? 'is-active' : ''} ${shot.status === 'done' ? 'is-bound' : ''}" data-section="${item.index}" data-shot="${shot.no - 1}">
+        <span class="tree-shot-no">${pad(shot.no)}</span>
+        <span class="tree-shot-name">${shot.visual.split('：')[1] || shot.visual}</span>
+        <span class="tree-shot-state">${shot.status === 'done' ? '已配' : '待配'}</span>
+      </button>`;
+    }).join('')}</div>` : '';
+    return `<div class="tree-section ${isActive ? 'is-active' : ''} ${statusClass}">
+      <button class="tree-section-head" data-section="${item.index}" data-toggle="true">
+        <span class="tree-check">${isDone ? '✓' : isActive ? '•' : ''}</span>
+        <span class="tree-section-copy"><span class="tree-section-name">${item.code} ${item.title}</span><span class="tree-section-meta">${meta}</span></span>
+        <span class="tree-section-index">${isProof ? '' : isExpanded ? '▾' : '▸'}</span>
       </button>
-    `;
+      ${shots}
+    </div>`;
   }).join('');
 
-  $$('.shot-block', timeline).forEach((node) => {
-    node.addEventListener('click', () => selectShot(node.dataset.shot));
+  $('#sectionTree').innerHTML = `<div class="tree-chapter">${state.chapter.no} ${state.chapter.title}<small>第 ${state.episode?.no || 1} 集 · ${state.chapter.sections.length} 节 · ${totalShots()} 镜 · ${formatTime(state.chapter.sections.reduce((sum, item) => sum + sectionDuration(item), 0))}</small></div>${rows || '<div class="tree-empty">没有匹配的小节</div>'}`;
+
+  $$('.tree-section-name').forEach((name) => {
+    name.addEventListener('dblclick', (event) => {
+      event.stopPropagation();
+      const sectionIndex = Number(name.closest('.tree-section-head').dataset.section);
+      const section = state.chapter.sections[sectionIndex];
+      const nextTitle = window.prompt('小节名称', section.title);
+      if (nextTitle && nextTitle.trim()) {
+        section.title = nextTitle.trim();
+        renderWorkspace();
+        showToast('小节名称已更新（本地演示）');
+      }
+    });
+  });
+
+  $$('.tree-section-head').forEach((row) => {
+    row.addEventListener('click', () => {
+      const index = Number(row.dataset.section);
+      if (isProof) {
+        selectSection(index);
+        return;
+      }
+      if (state.sectionIndex === index && state.expanded.has(index)) {
+        state.expanded.delete(index);
+      } else {
+        state.expanded.add(index);
+        selectSection(index);
+      }
+      renderTree();
+    });
+  });
+
+  $$('.tree-shot').forEach((row) => {
+    row.addEventListener('click', () => {
+      const sectionIndex = Number(row.dataset.section);
+      state.sectionIndex = sectionIndex;
+      state.shotIndex = Number(row.dataset.shot);
+      state.expanded.add(sectionIndex);
+      stopPlayback();
+      renderWorkspace();
+    });
   });
 }
 
-function renderStats() {
-  const total = totalDuration();
-  $('#shotCount').textContent = String(shots.length);
-  $('#durationText').textContent = formatClock(total);
-  $('#timelineTotal') && ($('#timelineTotal').textContent = formatClock(total));
+function selectSection(index) {
+  if (index < 0 || index >= state.chapter.sections.length) return;
+  state.sectionIndex = index;
+  state.shotIndex = 0;
+  state.currentTime = 0;
+  state.expanded.add(index);
+  stopPlayback();
+  renderWorkspace();
 }
 
-function renderMaterials() {
-  const query = ($('#materialSearch')?.value || '').trim().toLowerCase();
-  const filtered = materials
-    .map((material, originalIndex) => ({ ...material, originalIndex }))
-    .filter((material) => {
-      if (!query) return true;
-      return `${material.name} ${material.tags}`.toLowerCase().includes(query);
-    });
+function renderMode() {
+  $$('.mode-tab').forEach((tab) => tab.classList.toggle('is-active', tab.dataset.mode === state.mode));
+  $('#proofMode').hidden = state.mode !== 'proof';
+  $('#scriptMode').hidden = state.mode !== 'script';
+  $('#assemblyMode').hidden = state.mode !== 'assembly';
+  $('#exportMode').hidden = state.mode !== 'export';
+  if (state.mode === 'proof') renderProof();
+  if (state.mode === 'script') renderScript();
+  if (state.mode === 'assembly') renderAssembly();
+}
 
-  $('#materialCount').textContent = String(materials.length);
-  $('#materialGrid').innerHTML = filtered.map((material) => `
-    <button class="material-card" data-material="${material.originalIndex}" type="button">
-      <span class="material-thumb">${sceneSvg(material.scene)}</span>
-      <span class="material-info">
-        <span class="material-name">${escapeHtml(material.name)}</span>
-        <span class="material-tags">${escapeHtml(material.tags)}</span>
-      </span>
+function escapeHtml(text) {
+  const node = document.createElement('div');
+  node.textContent = text;
+  return node.innerHTML;
+}
+
+function displayDiffText(text) {
+  return String(text).replaceAll(' ', '␠').replaceAll('\n', '↵');
+}
+
+function revisedProofText(section) {
+  let text = section.proofText;
+  section.proofIssues.forEach((issue) => {
+    if (issue.status === 'accepted') text = text.replaceAll(issue.before, issue.after);
+  });
+  return text;
+}
+
+function renderProofDocument(section) {
+  const issues = section.proofIssues;
+  return section.proofText.split('\n').map((paragraph) => {
+    if (state.proofView === 'original') return `<p>${escapeHtml(paragraph)}</p>`;
+    let html = escapeHtml(paragraph);
+    issues.forEach((issue) => {
+      if (issue.status === 'kept') return;
+      const before = escapeHtml(issue.before);
+      const after = escapeHtml(issue.after);
+      if (!html.includes(before)) return;
+      if (issue.status === 'accepted') {
+        html = html.replace(before, state.proofView === 'compare' ? `<del>${before}</del><ins>${after}</ins>` : after);
+      } else if (state.proofView === 'compare') {
+        html = html.replace(before, `<span class="proof-suggest" data-issue="${issue.id}">${before}</span>`);
+      }
+    });
+    return `<p>${html}</p>`;
+  }).join('');
+}
+
+function renderProof() {
+  const section = currentSection();
+  const issues = section.proofIssues;
+  const open = issues.filter((issue) => issue.status === 'open');
+  const statusLabel = section.proofStatus === 'final' ? '已定稿' : section.proofStatus === 'review' ? '待确认' : '未处理';
+  $('#proofKicker').textContent = `第 ${state.episode?.no || 1} 集 / ${state.chapter.no} / ${section.code}`;
+  $('#proofTitle').textContent = section.title;
+  $('#proofStatus').textContent = statusLabel;
+  $('#proofStatus').className = `status-badge ${section.proofStatus === 'final' ? 'is-done' : section.proofStatus === 'review' ? 'is-active' : 'is-todo'}`;
+  $('#proofMeta').textContent = issues.length ? `${issues.length} 处修改 · ${open.length} 项待处理` : '尚未检查本节文稿';
+  $('#proofPaperTitle').textContent = `${section.code} ${section.title}`;
+  $('#completeProofBtn').textContent = section.proofStatus === 'final' ? '本节已定稿' : '完成本节 →';
+  $('#completeProofBtn').disabled = section.proofStatus === 'final';
+  $('#checkProofBtn').textContent = issues.length ? '重新检查' : '检查本节';
+  $('#proofDocument').innerHTML = renderProofDocument(section);
+  $$('.proof-view').forEach((button) => button.classList.toggle('is-active', button.dataset.view === state.proofView));
+  $$('.proof-suggest').forEach((suggest) => {
+    suggest.addEventListener('click', () => showToast('在右侧修改清单里采用或保留这一条'));
+  });
+}
+
+function checkProofSection() {
+  const section = currentSection();
+  if (!section.proofIssues.length) {
+    const issues = detectProofIssues(section.proofText);
+    if (!issues.length) {
+      section.proofStatus = 'final';
+      renderWorkspace();
+      saveProjects();
+      showToast('没有发现基础错误，本节已标记为定稿');
+      return;
+    }
+    section.proofIssues = issues;
+    section.proofStatus = 'review';
+    renderWorkspace();
+    saveProjects();
+    showToast(`检查完成：发现 ${section.proofIssues.length} 处基础问题`);
+  } else {
+    showToast(`本节已有 ${section.proofIssues.length} 处修改`);
+  }
+}
+
+function acceptSafeProof() {
+  const section = currentSection();
+  section.proofIssues.forEach((issue) => {
+    if (issue.safe && issue.status === 'open') issue.status = 'accepted';
+  });
+  renderWorkspace();
+  saveProjects();
+  showToast('安全项已采用');
+}
+
+function acceptProofIssue(id) {
+  const section = currentSection();
+  const issue = section.proofIssues.find((item) => item.id === id);
+  if (!issue) return;
+  issue.status = 'accepted';
+  renderWorkspace();
+  saveProjects();
+}
+
+function keepProofIssue(id) {
+  const section = currentSection();
+  const issue = section.proofIssues.find((item) => item.id === id);
+  if (!issue) return;
+  issue.status = 'kept';
+  renderWorkspace();
+  saveProjects();
+}
+
+function completeProofSection() {
+  const section = currentSection();
+  if (section.proofStatus === 'final') {
+    showToast('本节文稿已经定稿');
+    return;
+  }
+  const openReview = section.proofIssues.filter((issue) => issue.status === 'open' && !issue.safe);
+  if (openReview.length) {
+    showToast(`还有 ${openReview.length} 项需确认：先采用或保留`);
+    return;
+  }
+  section.proofIssues.forEach((issue) => { if (issue.status === 'open') issue.status = 'accepted'; });
+  section.proofStatus = 'final';
+  const next = state.chapter.sections[state.sectionIndex + 1];
+  if (next) {
+    state.sectionIndex += 1;
+    state.shotIndex = 0;
+    showToast(`「${section.code} ${section.title}」文稿已定稿，下一节：${next.code} ${next.title}`);
+  } else {
+    showToast('本章最后一节已定稿');
+  }
+  renderWorkspace();
+  saveProjects();
+}
+
+function renderScript() {
+  const section = currentSection();
+  const bound = section.shots.filter((shot) => shot.status === 'done').length;
+  const proofLocked = section.proofStatus !== 'final';
+  $('#scriptProofNotice').hidden = !proofLocked;
+  $('#regenSectionBtn').disabled = proofLocked;
+  $('#scriptKicker').textContent = `第 ${state.episode?.no || 1} 集 / ${state.chapter.no} / ${section.code}`;
+  $('#scriptTitle').textContent = section.title;
+  $('#scriptStatus').textContent = section.status === 'done' ? '已完成' : section.status === 'active' ? '进行中' : '未开始';
+  $('#scriptStatus').className = `status-badge ${section.status === 'done' ? 'is-done' : section.status === 'active' ? 'is-active' : 'is-todo'}`;
+  $('#scriptMeta').textContent = `${section.shots.length} 镜 · ${formatTime(sectionDuration(section))} · 已配 ${bound}/${section.shots.length} 镜`;
+  $('#scriptChars').textContent = `约 ${section.text.replace(/\s/g, '').length} 字`;
+  $('#scriptText').innerHTML = section.text.split('\n').map((paragraph) => `<p>${paragraph}</p>`).join('');
+  $('#tableCount').textContent = `${section.shots.length} 行`;
+  $('#shotTableBody').innerHTML = section.shots.map((shot, index) => `
+    <tr class="${index === state.shotIndex ? 'is-active' : ''}" data-shot-row="${index}">
+      <td class="num">${pad(shot.no)}</td>
+      <td>${shot.duration}s</td>
+      <td class="desc">${shot.visual}</td>
+      <td>${shot.type}</td>
+      <td class="state ${shot.status === 'done' ? 'done' : 'todo'}">${shot.status === 'done' ? '已配' : '待配'}</td>
+    </tr>
+  `).join('');
+  $$('#shotTableBody tr').forEach((row) => {
+    row.addEventListener('click', () => {
+      state.shotIndex = Number(row.dataset.shotRow);
+      state.mode = 'assembly';
+      renderWorkspace();
+    });
+  });
+  $('#copySectionBtn').onclick = () => copyText(section.text);
+  $('#regenSectionBtn').onclick = () => showToast(`本地演示：只重拆「${section.title}」这一节（不会真调用 AI）`);
+}
+
+function applyPlayerSize() {
+  const wrap = $('#playerWrap');
+  const frame = $('#playerFrame');
+  const stage = $('#playerCanvas');
+  if (!wrap || !frame || !stage) return;
+  const [ratio, resolution] = state.playerSize.split('|');
+  const [rw, rh] = ratio.split(':').map(Number);
+  const center = $('#assemblyMode');
+  const maxW = Math.max(220, (center?.clientWidth || 760) - 40);
+  const maxH = window.innerHeight <= 850 ? 300 : 380;
+  if (!maxW) {
+    requestAnimationFrame(applyPlayerSize);
+    return;
+  }
+  let width = maxW;
+  let height = width * rh / rw;
+  if (height > maxH) {
+    height = maxH;
+    width = height * rw / rh;
+  }
+  wrap.style.width = `${Math.floor(width)}px`;
+  stage.style.height = `${Math.floor(height)}px`;
+  frame.style.width = '100%';
+  frame.style.height = '100%';
+  const meta = $('#playerSizeMeta');
+  if (meta) meta.textContent = `${ratio} · ${resolution}`;
+}
+
+function renderAssembly() {
+  const section = currentSection();
+  const shot = currentShot();
+  const duration = sectionDuration(section);
+  $('#sizeSelect').value = state.playerSize;
+  $('#assemblyKicker').textContent = `第 ${state.episode?.no || 1} 集 / ${state.chapter.no} / ${section.code}`;
+  $('#assemblyTitle').textContent = section.title;
+  $('#assemblyStatus').textContent = section.status === 'done' ? '已完成' : section.status === 'active' ? '进行中' : '未开始';
+  $('#assemblyStatus').className = `status-badge ${section.status === 'done' ? 'is-done' : section.status === 'active' ? 'is-active' : 'is-todo'}`;
+  $('#playerFrame').innerHTML = sceneSvg(shot.type);
+  $('#playerBadge').textContent = `镜头 ${pad(shot.no)} / ${section.shots.length}`;
+  $('#playerVisual').textContent = shot.visual;
+  applyPlayerSize();
+  $('#timelineMeta').textContent = `${section.shots.length} 镜 · ${formatTime(duration)}`;
+  $('#timelineSectionName').textContent = `${section.code} ${section.title}`;
+  $('#timelineTrack').innerHTML = section.shots.map((item, index) => `
+    <button class="timeline-clip ${index === state.shotIndex ? 'is-active' : ''}" data-shot="${index}" style="width:${Math.max(62, item.duration * 4.4)}px">
+      <strong>${pad(item.no)}</strong>
+      <span>${item.type} · ${item.duration}s</span>
     </button>
   `).join('');
-
-  $('#materialEmpty').hidden = filtered.length > 0;
-  $$('.material-card', $('#materialGrid')).forEach((node) => {
-    node.addEventListener('click', () => {
-      const material = materials[Number(node.dataset.material)];
-      activeShot().material = material.name;
-      toast(`已关联素材：${material.name}`);
+  const marks = [0, Math.round(duration * .33), Math.round(duration * .66), duration];
+  $('#timelineRuler').innerHTML = marks.map((value) => `<span style="left:${(value / duration) * 100}%">${formatTime(value)}</span>`).join('');
+  $$('.timeline-clip').forEach((clip) => {
+    clip.addEventListener('click', () => {
+      state.shotIndex = Number(clip.dataset.shot);
+      state.currentTime = section.shots.slice(0, state.shotIndex).reduce((sum, item) => sum + item.duration, 0);
+      stopPlayback();
+      renderWorkspace();
     });
   });
+  updatePlaybackUI();
+  $('#playBtn').onclick = togglePlayback;
 }
 
-function renderAll() {
-  renderScript();
-  renderPreview();
-  renderSuggestions();
-  renderTimeline();
-  renderStageNotes();
-  renderStats();
-  renderMaterials();
-}
-
-/* =========================================================
-   选择 / 播放
-   ========================================================= */
-
-function stopPlayback() {
-  if (audioTimer) clearInterval(audioTimer);
-  audioTimer = null;
-  isPlaying = false;
-  updatePlayButton();
-}
-
-function selectShot(id, { playback = false } = {}) {
-  if (!shots.some((shot) => shot.id === id)) return;
-  if (!playback) {
-    stopPlayback();
-    activeId = id;
-    audioElapsed = startOf(shotIndex());
-    updateAudioUI();
-  } else {
-    activeId = id;
-  }
-  renderScript();
-  renderPreview();
-  renderSuggestions();
-  renderTimeline();
-  renderStageNotes();
-}
-
-function updatePlayButton() {
-  const button = $('#playBtn');
-  button.innerHTML = isPlaying
-    ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="m8 5 11 7-11 7V5Z"/></svg>';
-  button.setAttribute('aria-label', isPlaying ? '暂停旁白' : '播放旁白');
-}
-
-function updateAudioUI() {
-  const total = totalDuration();
-  const ratio = total ? Math.min(1, audioElapsed / total) : 0;
-  $('#audioClock').textContent = formatClock(audioElapsed);
-  $('#audioProgress').style.width = `${ratio * 100}%`;
-  $$('#waveform i').forEach((bar, index) => {
-    bar.classList.toggle('is-played', index / $$('#waveform i').length < ratio);
-  });
+function updatePlaybackUI() {
+  const section = currentSection();
+  const total = sectionDuration(section);
+  $('#playerTime').textContent = `${formatTime(state.currentTime)} / ${formatTime(total)}`;
+  $('#playerProgress').style.width = `${Math.min(100, (state.currentTime / total) * 100)}%`;
 }
 
 function togglePlayback() {
-  if (isPlaying) {
-    stopPlayback();
+  if (state.playing) { stopPlayback(); return; }
+  state.playing = true;
+  const section = currentSection();
+  const total = sectionDuration(section);
+  if (state.currentTime >= total) state.currentTime = 0;
+  state.playTimer = setInterval(() => {
+    state.currentTime += .25;
+    if (state.currentTime >= total) {
+      state.currentTime = total;
+      updatePlaybackUI();
+      stopPlayback();
+      showToast('本节预演结束');
+      return;
+    }
+    updatePlaybackUI();
+    let cursor = 0;
+    let nextIndex = 0;
+    section.shots.forEach((shot, index) => {
+      if (state.currentTime >= cursor) nextIndex = index;
+      cursor += shot.duration;
+    });
+    if (nextIndex !== state.shotIndex) {
+      state.shotIndex = nextIndex;
+      renderWorkspace();
+    }
+  }, 250);
+}
+
+function stopPlayback() {
+  if (state.playTimer) clearInterval(state.playTimer);
+  state.playTimer = null;
+  state.playing = false;
+}
+
+function renderRight() {
+  const section = currentSection();
+  const shot = currentShot();
+  if (state.mode === 'proof') {
+    const issues = section.proofIssues;
+    const open = issues.filter((issue) => issue.status === 'open');
+    const safeOpen = open.filter((issue) => issue.safe);
+    const reviewOpen = open.filter((issue) => !issue.safe);
+    const statusLabel = section.proofStatus === 'final' ? '已定稿' : section.proofStatus === 'review' ? '待确认' : '未处理';
+    const issueHtml = (issue) => `<div class="proof-issue">
+      <div class="proof-issue-top"><span class="proof-issue-type">${issue.type}</span><span class="muted">${issue.safe ? '安全项' : '需确认'}</span></div>
+      <div class="proof-issue-reason">${issue.reason}</div>
+      <div class="proof-issue-diff"><del>${escapeHtml(displayDiffText(issue.before))}</del> → <ins>${escapeHtml(displayDiffText(issue.after))}</ins></div>
+      <div class="proof-issue-actions"><button class="btn btn-soft" data-accept="${issue.id}">采用</button><button class="btn btn-ghost" data-keep="${issue.id}">保留原句</button></div>
+    </div>`;
+    $('#rightPanel').innerHTML = `
+      <div class="right-section">
+        <div class="panel-kicker">PROOFREADING</div>
+        <h3 class="panel-title">文稿处理</h3>
+        <div class="proof-right-stats">
+          <div class="proof-right-stat"><small>状态</small><strong>${statusLabel}</strong></div>
+          <div class="proof-right-stat"><small>修改</small><strong>${issues.length}</strong></div>
+          <div class="proof-right-stat"><small>待处理</small><strong>${open.length}</strong></div>
+          <div class="proof-right-stat"><small>已处理</small><strong>${issues.length - open.length}</strong></div>
+        </div>
+        <button class="btn btn-soft proof-accept-all" id="acceptSafeBtn" ${safeOpen.length ? '' : 'disabled'}>接受全部安全项（${safeOpen.length}）</button>
+        ${issues.length ? `
+          ${safeOpen.length ? `<div class="proof-issue-group"><div class="proof-issue-group-head"><strong>安全项</strong><span>${safeOpen.length} 处</span></div>${safeOpen.map(issueHtml).join('')}</div>` : ''}
+          ${reviewOpen.length ? `<div class="proof-issue-group"><div class="proof-issue-group-head"><strong>需确认</strong><span>${reviewOpen.length} 处</span></div>${reviewOpen.map(issueHtml).join('')}</div>` : ''}
+          ${!open.length ? '<div class="proof-protect">这一节的修改已经处理完，可以定稿。</div>' : ''}
+        ` : '<div class="proof-protect">还没有检查这一节。点「检查本节」开始基础校订。</div>'}
+        <button class="btn btn-primary proof-complete" id="proofCompleteRight">${section.proofStatus === 'final' ? '本节已定稿' : '完成本节并进入下一节'}</button>
+        <div class="proof-protect"><strong>保护词：</strong>专名 / 人名 / 发音保护词。只改错别字、标点、空格、重复和明显病句。</div>
+      </div>`;
+    $('#acceptSafeBtn').addEventListener('click', acceptSafeProof);
+    $('#proofCompleteRight').addEventListener('click', completeProofSection);
+    $$('[data-accept]').forEach((button) => button.addEventListener('click', () => acceptProofIssue(button.dataset.accept)));
+    $$('[data-keep]').forEach((button) => button.addEventListener('click', () => keepProofIssue(button.dataset.keep)));
     return;
   }
-  if (audioElapsed >= totalDuration()) audioElapsed = 0;
-  isPlaying = true;
-  updatePlayButton();
-  audioTimer = setInterval(() => {
-    audioElapsed += 0.1;
-    if (audioElapsed >= totalDuration()) {
-      audioElapsed = totalDuration();
-      updateAudioUI();
-      stopPlayback();
-      toast('演示播放结束');
-      return;
-    }
-    updateAudioUI();
-    const index = shots.findIndex((shot, i) => audioElapsed >= startOf(i) && audioElapsed < startOf(i) + currentOption(shot).duration);
-    if (index >= 0 && shots[index].id !== activeId) selectShot(shots[index].id, { playback: true });
-  }, 100);
-}
 
-/* =========================================================
-   导入 / 导出
-   ========================================================= */
-
-function parseSentences(text) {
-  const cleaned = text.replace(/\r/g, '').trim();
-  if (!cleaned) return [];
-
-  let pieces = cleaned
-    .split('\n')
-    .map((line) => line.replace(/^[-*•\s]+/, '').trim())
-    .filter(Boolean);
-
-  if (pieces.length <= 1) {
-    pieces = cleaned.split(/(?<=[。！？!?])\s*/u).map((line) => line.trim()).filter(Boolean);
+  if (state.mode === 'script') {
+    const bound = section.shots.filter((item) => item.status === 'done').length;
+    const next = state.chapter.sections[state.sectionIndex + 1];
+    $('#rightPanel').innerHTML = `
+      <div class="right-section">
+        <div class="panel-kicker">SECTION WORK</div>
+        <h3 class="panel-title">本节工作</h3>
+        <div class="stat-grid">
+          <div class="stat"><small>镜头</small><strong>${section.shots.length}</strong></div>
+          <div class="stat"><small>预计时长</small><strong>${formatTime(sectionDuration(section))}</strong></div>
+          <div class="stat"><small>已配画面</small><strong>${bound}/${section.shots.length}</strong></div>
+          <div class="stat"><small>状态</small><strong>${section.status === 'done' ? '完成' : section.status === 'active' ? '进行中' : '未开始'}</strong></div>
+        </div>
+        <div class="section-progress">
+          <div class="progress-bar"><i style="width:${Math.round((bound / section.shots.length) * 100)}%"></i></div>
+          <div class="progress-label"><span>${section.code} ${section.title}</span><span>${Math.round((bound / section.shots.length) * 100)}%</span></div>
+        </div>
+        <button class="btn btn-primary complete-btn" id="completeSectionBtn" ${section.proofStatus !== 'final' ? 'disabled' : ''}>${section.proofStatus !== 'final' ? '先完成文稿处理' : section.status === 'done' ? '本节已完成' : '完成本节，进入下一节'}</button>
+        <div class="next-line">${next ? `下一节：${next.code} ${next.title}` : '这是本章最后一节'}</div>
+      </div>
+      <div class="right-section">
+        <div class="panel-kicker">EXCEL</div>
+        <h3 class="panel-title">工作簿对应</h3>
+        <p class="section-mini">章节 sheet：<strong>01 第一章</strong></p>
+        <p class="section-mini">整节文案：<strong>已保留</strong></p>
+        <div class="excel-note">本节的整节文案和镜头表会在同一个 sheet 里；小节用带颜色的标题行隔开，方便复制和筛选。</div>
+        <button class="btn btn-soft" style="width:100%;height:34px;margin-top:9px" id="copyFromRight">复制本节文案</button>
+      </div>`;
+    $('#completeSectionBtn').addEventListener('click', completeCurrentSection);
+    $('#copyFromRight').addEventListener('click', () => copyText(section.text));
+    return;
   }
 
-  return pieces.filter((line) => line.length > 1).slice(0, 12);
-}
-
-function generatedOptions(line, index) {
-  const pool = [
-    { scene: 'map', type: '地图', title: '地图定位', desc: '用地图建立空间关系与年代坐标。', keywords: ['历史地图', '地理位置', '年代'] },
-    { scene: 'timeline', type: '图表', title: '时间轴', desc: '把关键年份排成一条可读的时间线。', keywords: ['时间轴', '年代', '事件'] },
-    { scene: 'document', type: '史料', title: '文献与手稿', desc: '用档案、信件或文献建立史料质感。', keywords: ['历史文献', '手稿', '档案'] },
-    { scene: 'coins', type: '史料', title: '器物特写', desc: '用钱币、器物或艺术品做细节特写。', keywords: ['文物', '钱币', '博物馆'] },
-    { scene: 'senate', type: '情景', title: '人物与场景', desc: '用人物群像或历史场景还原气氛。', keywords: ['历史场景', '人物', '绘画'] },
-    { scene: 'soldiers', type: '情景', title: '动作与冲突', desc: '用军队、旗帜或行动镜头制造张力。', keywords: ['军队', '冲突', '旗帜'] },
-  ];
-  const chosen = [pool[index % pool.length], pool[(index + 2) % pool.length], pool[(index + 4) % pool.length]];
-  return chosen.map((item, i) => option(
-    item.scene,
-    `${item.title}${i === 0 ? '' : i === 1 ? ' · 备选' : ' · 备选'}`,
-    item.desc,
-    item.type,
-    Math.min(14, Math.max(6, Math.round(line.length / 18) + 4)),
-    i === 0 ? '缓推 / 叠化' : '硬切',
-    i === 0
-      ? '先用最直观的空间/时间信息建立上下文，让观众知道这句话在讲什么。'
-      : '换一种视觉语法，避免连续使用同一种镜头造成疲劳。',
-    item.keywords,
-  ));
-}
-
-function generateFromSentences(sentences, title) {
-  project.title = title || '未命名项目';
-  const types = ['背景', '数据', '冲突', '转折', '观点', '结论'];
-  shots.length = 0;
-  sentences.forEach((line, index) => {
-    shots.push({
-      id: `gen-${Date.now()}-${index}`,
-      line,
-      lineType: types[index % types.length],
-      optionIndex: 0,
-      adopted: false,
-      adoptedOption: null,
-      options: generatedOptions(line, index),
+  if (state.mode === 'assembly') {
+    const bound = section.shots.filter((item) => item.status === 'done').length;
+    const candidates = candidateMap[shot.type];
+    $('#rightPanel').innerHTML = `
+      <div class="right-section">
+        <div class="panel-kicker">SHOT SUGGESTION</div>
+        <h3 class="panel-title">镜头 ${pad(shot.no)}</h3>
+        <div class="suggestion-top"><span class="suggestion-no">${section.code} / 镜 ${pad(shot.no)}</span><span class="suggestion-type">${shot.type}</span></div>
+        <div class="suggestion-duration"><span>建议时长</span><strong>${shot.duration}s</strong></div>
+        <p class="suggestion-desc">${shot.visual}</p>
+        <div class="candidate-list">
+          ${candidates.map((candidate, index) => `<button class="candidate" data-candidate="${index}"><span class="candidate-thumb">${sceneSvg(shot.type)}</span><span class="candidate-copy"><strong>${candidate}</strong><small>${index === 0 ? '本地素材 · 可优先使用' : '候选素材 · 需确认授权'}</small></span><span class="candidate-mark">${index === 0 ? '推荐' : '＋'}</span></button>`).join('')}
+        </div>
+        <div class="source-line"><span>来源 / 授权</span><strong>本地素材库 · 待确认</strong></div>
+        <div class="right-actions"><button class="btn btn-soft" id="adoptBtn">采用建议</button><button class="btn btn-ghost" id="refreshBtn">换一组</button></div>
+      </div>
+      <div class="right-section">
+        <div class="panel-kicker">SECTION PROGRESS</div>
+        <h3 class="panel-title">本节完成度</h3>
+        <div class="section-progress"><div class="progress-bar"><i style="width:${Math.round((bound / section.shots.length) * 100)}%"></i></div><div class="progress-label"><span>${bound}/${section.shots.length} 镜已配</span><span>${Math.round((bound / section.shots.length) * 100)}%</span></div></div>
+        <button class="btn btn-primary complete-btn" id="completeSectionBtn" ${section.proofStatus !== 'final' ? 'disabled' : ''}>${section.proofStatus !== 'final' ? '先完成文稿处理' : section.status === 'done' ? '本节已完成' : '完成本节，进入下一节'}</button>
+      </div>`;
+    $('#adoptBtn').addEventListener('click', () => {
+      shot.status = 'done';
+      shot.material = candidates[0];
+      section.status = section.shots.every((item) => item.status === 'done') ? 'done' : 'active';
+      renderWorkspace();
+      saveProjects();
+      showToast(`已采用「${candidates[0]}」，镜头 ${pad(shot.no)} 标记为已配`);
     });
+    $('#refreshBtn').addEventListener('click', () => showToast('本地演示：换一组候选素材还没有接入'));
+    $$('.candidate').forEach((candidate) => candidate.addEventListener('click', () => {
+      showToast(`演示：选中「${candidates[Number(candidate.dataset.candidate)]}」`);
+    }));
+    $('#completeSectionBtn').addEventListener('click', completeCurrentSection);
+    return;
+  }
+
+  const done = doneSections();
+  const total = state.chapter.sections.length;
+  const shotsDone = doneShots();
+  $('#rightPanel').innerHTML = `
+    <div class="right-section">
+      <div class="panel-kicker">EXPORT STATUS</div>
+      <h3 class="panel-title">本集交付</h3>
+      <div class="stat-grid">
+        <div class="stat"><small>小节</small><strong>${done}/${total}</strong></div>
+        <div class="stat"><small>镜头</small><strong>${shotsDone}/${totalShots()}</strong></div>
+      </div>
+      <div class="section-progress"><div class="progress-bar"><i style="width:${Math.round((shotsDone / totalShots()) * 100)}%"></i></div><div class="progress-label"><span>本集素材覆盖</span><span>${Math.round((shotsDone / totalShots()) * 100)}%</span></div></div>
+      <p class="next-line">建议先导出 Excel 工作簿，再导出素材包。不要等全片结束才导出。</p>
+    </div>
+    <div class="right-section">
+      <div class="panel-kicker">MILESTONE</div>
+      <h3 class="panel-title">完成本集</h3>
+      <p class="next-line">完成 18 个小节后，本集可以单独导出，并进入下一集。系列进度也会前进一格。</p>
+      <button class="btn btn-soft complete-btn" id="finishEpisodeBtn">标记本集完成（演示）</button>
+    </div>`;
+  $('#finishEpisodeBtn').addEventListener('click', () => {
+    showToast(`演示：本集完成 ${doneSections()}/${state.chapter.sections.length} 节，还不能真正交付`);
   });
-  activeId = shots[0].id;
-  audioElapsed = 0;
-  updateProjectTitle();
-  renderAll();
-  updateAudioUI();
 }
 
-function openImport() {
-  $('#importTitleInput').value = project.title;
-  $('#importText').value = shots.map((shot) => shot.line).join('\n');
-  $('#importModal').hidden = false;
-  setTimeout(() => $('#importText').focus(), 50);
-}
-
-function closeImport() {
-  $('#importModal').hidden = true;
-}
-
-function exportCsv() {
-  const rows = [['序号', '时间', '旁白', '作用', '画面类型', '画面建议', '搜索词', '来源', '版权', '时长', '转场']];
-  shots.forEach((shot, index) => {
-    const opt = currentOption(shot);
-    rows.push([
-      String(index + 1).padStart(2, '0'),
-      formatClock(startOf(index)),
-      shot.line,
-      shot.lineType,
-      opt.type,
-      `${opt.title}：${opt.desc}`,
-      opt.keywords.join(' / '),
-      opt.source,
-      opt.license,
-      `${opt.duration}s`,
-      opt.transition,
-    ]);
+function addSection() {
+  const index = state.chapter.sections.length;
+  const title = `新小节 ${index + 1}`;
+  const shots = Array.from({ length: 3 }, (_, i) => {
+    const type = types[i % types.length];
+    return {
+      id: `${index + 1}-${i + 1}`,
+      no: i + 1,
+      duration: 15,
+      type,
+      visual: `${title}：${visualPhrases[i % visualPhrases.length]}`,
+      material: '',
+      status: 'todo',
+    };
   });
-  const csv = `\ufeff${rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n')}`;
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${project.title.replace(/[\\/:*?"<>|]/g, '_')}-分镜表.csv`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast('分镜表已导出，可在 Excel / 剪映工作流中继续整理');
+  state.chapter.sections.push({
+    index,
+    code: `1.${index + 1}`,
+    title,
+    status: 'pending',
+    duration: shots.reduce((sum, shot) => sum + shot.duration, 0),
+    shots,
+    proofStatus: 'unprocessed',
+    proofIssues: [],
+    proofText: `这是「${title}」这一节的演示文案。`,
+    text: [
+      `这是「${title}」这一节的演示文案。`,
+      '新增小节后，镜头表、时长和文案都会出现在同一个工作区里。',
+      '后续可以把它写回同一个 Excel sheet，并按小节标题行分组。',
+    ].join('\n'),
+  });
+  state.sectionIndex = index;
+  state.shotIndex = 0;
+  state.expanded.add(index);
+  renderWorkspace();
+  saveProjects();
+  showToast(`已新增「${title}」，可以在左侧继续编辑`);
 }
 
-/* =========================================================
-   事件
-   ========================================================= */
+function completeCurrentSection() {
+  const section = currentSection();
+  if (section.proofStatus !== 'final') {
+    showToast('先到「文稿处理」完成本节定稿');
+    return;
+  }
+  if (section.status === 'done') {
+    showToast('本节已经完成');
+    return;
+  }
+  section.status = 'done';
+  section.shots.forEach((shot) => {
+    shot.status = 'done';
+    shot.material = shot.material || candidateMap[shot.type][0];
+  });
+  const next = state.chapter.sections[state.sectionIndex + 1];
+  if (next) {
+    state.sectionIndex += 1;
+    state.shotIndex = 0;
+    state.currentTime = 0;
+    state.expanded.add(state.sectionIndex);
+    showToast(`「${section.code} ${section.title}」完成，下一节：${next.code} ${next.title}`);
+  } else {
+    showToast('本章最后一节完成');
+  }
+  stopPlayback();
+  renderWorkspace();
+  saveProjects();
+}
 
+/* ---------------- theme ---------------- */
+function applyTheme(theme) {
+  const next = ['white', 'gray', 'dark'].includes(theme) ? theme : 'white';
+  document.body.dataset.theme = next;
+  $$('.theme-dot').forEach((dot) => dot.classList.toggle('is-active', dot.dataset.theme === next));
+  try { localStorage.setItem('storyboard-demo-theme', next); } catch {}
+}
+
+/* ---------------- events ---------------- */
 function bindEvents() {
-  $('#playBtn').addEventListener('click', togglePlayback);
-
-  $('#importBtn').addEventListener('click', openImport);
-  $('#closeImport').addEventListener('click', closeImport);
-  $('#cancelImport').addEventListener('click', closeImport);
-  $('#importModal').addEventListener('click', (event) => {
-    if (event.target === $('#importModal')) closeImport();
+  $('#brandHome').addEventListener('click', (event) => { event.preventDefault(); backToProjects(); });
+  $('#backToSeries').addEventListener('click', backToSeries);
+  $('#backToProjectsBtn').addEventListener('click', backToProjects);
+  $('#newProjectBtn').addEventListener('click', openNewProject);
+  $('#newProjectBack').addEventListener('click', backToProjects);
+  $('#newProjectCreate').addEventListener('click', createProjectFromForm);
+  $('#newProjectSample').addEventListener('click', () => {
+    $('#newProjectName').value = '新项目：示例文稿';
+    $('#newProjectScript').value = `这是原始文稿的第一段，里面有一些基础错误。\n这一节  的文字中间多了空格，需要处理。\n整段文案最后多了一个英文句号.\n这一节还没有拆分镜头，先处理文稿，再设计镜头表。`;
+    updateNewProjectCount();
   });
-
-  $('#confirmImport').addEventListener('click', () => {
-    const sentences = parseSentences($('#importText').value);
-    if (!sentences.length) {
-      toast('先粘贴至少一句旁白');
-      return;
-    }
-    generateFromSentences(sentences, $('#importTitleInput').value.trim());
-    closeImport();
-    toast(`已生成 ${sentences.length} 个镜头，点击任意一句查看建议`);
+  $('#newProjectFile').addEventListener('click', () => $('#newProjectFileInput').click());
+  $('#newProjectFileInput').addEventListener('change', (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      $('#newProjectName').value = file.name.replace(/\.(txt|md)$/i, '') || '未命名项目';
+      $('#newProjectScript').value = String(reader.result || '');
+      updateNewProjectCount();
+      showToast(`已读取 ${file.name}`);
+    };
+    reader.onerror = () => showToast('文件读取失败');
+    reader.readAsText(file, 'utf-8');
   });
-
-  $('#generateBtn').addEventListener('click', () => {
-    const button = $('#generateBtn');
-    const original = button.innerHTML;
-    button.classList.add('is-loading');
-    button.disabled = true;
-    button.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg> 正在理解稿子…';
-    setTimeout(() => {
-      button.classList.remove('is-loading');
-      button.disabled = false;
-      button.innerHTML = original;
-      toast(`已重新分析 ${shots.length} 个镜头 · ${shots.filter((shot) => shot.adopted).length} 个已采用`);
-    }, 1200);
+  $('#newProjectScript').addEventListener('input', updateNewProjectCount);
+  $('#renameProjectBtn').addEventListener('click', renameCurrentProject);
+  $('#continueBtn').addEventListener('click', openWorkspace);
+  $$('.theme-dot').forEach((dot) => dot.addEventListener('click', () => applyTheme(dot.dataset.theme)));
+  $('#seriesHelp').addEventListener('click', () => showToast('顺序：项目 → 系列 → 第1集 → 第一章 → 小节 → 镜头；先完成一小节'));
+  $('#helpBtn').addEventListener('click', () => showToast('这是本地界面演示：一集 = 项目，章 = Excel sheet，小节 = 工作单元'));
+  $('#exportWorkbook').addEventListener('click', () => showToast('本地演示：导出 00 总览 + 本集章节 sheet（尚未写入文件）'));
+  $('#sheetOverview').addEventListener('click', () => showToast('00 总览在 Excel 工作簿里：系列 / 每集 / 每章进度'));
+  $('#newChapterSheet').addEventListener('click', () => showToast('本地演示：新增章 sheet 还没有接入；一个 sheet 对应一个大章'));
+  $('#sheetChapter').addEventListener('click', () => showToast('当前打开：第一章（1 个 chapter sheet）'));
+  $('#addSectionBtn').addEventListener('click', addSection);
+  $('#exportNowBtn').addEventListener('click', () => {
+    showToast(`已准备导出（演示）：${$('.export-card.is-selected strong')?.textContent || '本集初稿'}`);
   });
-
-  $('#refreshIdea').addEventListener('click', () => {
-    const shot = activeShot();
-    shot.optionIndex = (shot.optionIndex + 1) % shot.options.length;
-    shot.adopted = false;
-    shot.adoptedOption = null;
-    renderAll();
-    toast('已换一个画面方案');
+  $('#exportCsvBtn').addEventListener('click', downloadProjectCsv);
+  $$('.export-card').forEach((card) => card.addEventListener('click', () => {
+    $$('.export-card').forEach((item) => item.classList.toggle('is-selected', item === card));
+  }));
+  $$('.mode-tab').forEach((tab) => tab.addEventListener('click', () => {
+    state.mode = tab.dataset.mode;
+    stopPlayback();
+    renderWorkspace();
+  }));
+  $$('.proof-view').forEach((button) => button.addEventListener('click', () => {
+    state.proofView = button.dataset.view;
+    renderProof();
+  }));
+  $('#checkProofBtn').addEventListener('click', checkProofSection);
+  $('#completeProofBtn').addEventListener('click', completeProofSection);
+  $('#copyProofBtn').addEventListener('click', () => copyText(revisedProofText(currentSection())));
+  $$('#treeFilter .filter-chip').forEach((chip) => chip.addEventListener('click', () => {
+    state.filter = chip.dataset.filter;
+    $$('#treeFilter .filter-chip').forEach((item) => item.classList.toggle('is-active', item === chip));
+    renderTree();
+  }));
+  $$('.scope-chip').forEach((chip) => chip.addEventListener('click', () => {
+    $$('.scope-chip').forEach((item) => item.classList.toggle('is-active', item === chip));
+    showToast(`播放范围：${chip.textContent}（演示）`);
+  }));
+  $('#prevSectionBtn').addEventListener('click', () => selectSection(state.sectionIndex - 1));
+  $('#nextSectionBtn').addEventListener('click', () => selectSection(state.sectionIndex + 1));
+  $('#sizeSelect').addEventListener('change', (event) => {
+    state.playerSize = event.target.value;
+    if (state.mode === 'assembly') renderWorkspace();
+    const [ratio, resolution] = state.playerSize.split('|');
+    showToast(`播放器尺寸：${ratio} · ${resolution}`);
   });
-
-  $('#adoptBtn').addEventListener('click', () => {
-    const shot = activeShot();
-    shot.adoptedOption = shot.options[shot.optionIndex];
-    shot.adopted = true;
-    renderAll();
-    toast('镜头已采用，时间线已同步');
+  window.addEventListener('resize', () => {
+    if (state.mode === 'assembly') applyPlayerSize();
   });
-
-  $('#shotNote').addEventListener('input', (event) => {
-    activeShot().note = event.target.value;
-  });
-
-  $('#nextShotButton').addEventListener('click', () => {
-    const next = shots[shotIndex() + 1];
-    if (next) selectShot(next.id);
-  });
-
-  $('#exportBtn').addEventListener('click', exportCsv);
-
-  $('#materialTabBtn').addEventListener('click', () => switchTab('materials'));
-  $('#aiTabBtn').addEventListener('click', () => switchTab('ai'));
-  $('#materialSearch').addEventListener('input', renderMaterials);
-  $('#addMaterial').addEventListener('click', () => {
-    materials.push({ name: `新素材_${String(materials.length + 1).padStart(2, '0')}`, scene: 'document', tags: '待整理 · 未标注' });
-    renderMaterials();
-    toast('已添加一个演示素材');
-  });
-
-  $('#collapseScript').addEventListener('click', () => {
-    const pane = $('.script-pane');
-    const collapsed = pane.classList.toggle('is-collapsed');
-    $('.workspace').classList.toggle('script-collapsed', collapsed);
-    $('#collapseScript').textContent = collapsed ? '＋' : '−';
-    $('#collapseScript').title = collapsed ? '展开' : '收起';
-    toast(collapsed ? '脚本已收起，点左侧「脚本」恢复' : '脚本已展开');
-  });
-
-  $('#fullscreenBtn').addEventListener('click', async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await $('#preview').requestFullscreen();
-    } catch {
-      toast('当前浏览器不支持预览全屏');
-    }
-  });
-
-  $$('.rail-item').forEach((item, index) => {
-    item.addEventListener('click', () => {
-      $$('.rail-item').forEach((node) => node.classList.remove('is-active'));
-      item.classList.add('is-active');
-      if (index === 1) {
-        const pane = $('.script-pane');
-        pane.classList.remove('is-collapsed');
-        $('.workspace').classList.remove('script-collapsed');
-        $('#collapseScript').textContent = '−';
-        toast('脚本面板已展开');
-      } else if (index === 2) {
-        switchTab('materials');
-        toast('已打开素材库');
-      } else if (index === 3) {
-        exportCsv();
-      } else {
-        toast('项目视图：当前为原型演示');
-      }
-    });
-  });
-
-  $('.rail-help').addEventListener('click', () => toast('演示版：真实版本会接入 AI 与本地素材索引'));
-
   document.addEventListener('keydown', (event) => {
-    const tag = event.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (event.key === 'Escape') closeImport();
-    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-      event.preventDefault();
-      selectShot(shots[Math.min(shots.length - 1, shotIndex() + 1)].id);
-    }
-    if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-      event.preventDefault();
-      selectShot(shots[Math.max(0, shotIndex() - 1)].id);
-    }
-    if (event.code === 'Space') {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+    if (event.code === 'Space' && state.mode === 'assembly') {
       event.preventDefault();
       togglePlayback();
     }
   });
 }
 
-function switchTab(tab) {
-  activeTab = tab;
-  const isMaterials = tab === 'materials';
-  $('#aiTabBtn').classList.toggle('is-active', !isMaterials);
-  $('#materialTabBtn').classList.toggle('is-active', isMaterials);
-  $('#aiTabBtn').setAttribute('aria-selected', String(!isMaterials));
-  $('#materialTabBtn').setAttribute('aria-selected', String(isMaterials));
-  $('#aiPanel').hidden = isMaterials;
-  $('#materialPanel').hidden = !isMaterials;
-}
-
-/* =========================================================
-   初始化
-   ========================================================= */
-
-function initWaveform() {
-  const waveform = $('#waveform');
-  const bars = Array.from({ length: 64 }, (_, index) => {
-    const height = 5 + Math.round((Math.sin(index * 0.72) * 0.45 + Math.sin(index * 1.7) * 0.25 + 0.5) * 18);
-    return `<i style="height:${Math.max(4, height)}px"></i>`;
-  });
-  waveform.innerHTML = bars.join('');
-}
-
-function init() {
-  initWaveform();
-  updateProjectTitle();
-  bindEvents();
-  renderAll();
-  updateAudioUI();
-}
-
-init();
+let initialTheme = 'white';
+try { initialTheme = localStorage.getItem('storyboard-demo-theme') || 'white'; } catch {}
+applyTheme(initialTheme);
+renderProjectPage();
+bindEvents();

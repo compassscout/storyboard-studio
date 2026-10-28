@@ -20,7 +20,7 @@ function createWindow() {
     },
   });
 
-  win.loadFile(path.join(__dirname, 'studio.html'));
+  win.loadFile(path.join(__dirname, 'index.html'));
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://')) shell.openExternal(url);
