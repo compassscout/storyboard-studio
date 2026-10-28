@@ -11,7 +11,16 @@
 - 网页演示：<https://compassscout.github.io/storyboard-studio/>
 - GitHub：<https://github.com/compassscout/storyboard-studio>
 
-## 桌面版运行
+## 直接运行（Windows 便携版）
+
+如果你不想装 Node.js，直接下载便携版：
+
+[下载 Storyboard Studio v0.1.0 Windows x64（约 159 MB）](https://github.com/compassscout/storyboard-studio/releases/download/v0.1.0/storyboard-studio-v0.1.0-win-x64.zip)
+
+解压后双击 `StoryboardStudio.exe`。  
+Windows 可能提示“未知发布者”，这是因为应用还没有代码签名，选择“更多信息 → 仍要运行”即可。
+
+## 从源码运行
 
 需要 Node.js 20+。
 
