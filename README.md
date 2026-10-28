@@ -1,6 +1,6 @@
 # 分镜台 Studio · v0.3.0
 
-[**在线打开 v0.3.0 制作台**](https://compassscout.github.io/storyboard-studio/storyboard-studio-v3/)
+[**在线打开 v0.3.0 制作台**](https://compassscout.github.io/storyboard-studio/storyboard-studio-v3/) · [**下载 v0.3.0**](https://github.com/compassscout/storyboard-studio/releases/tag/v0.3.0)
 
 一个**本地优先**的视频分镜与装配工作台。
 
